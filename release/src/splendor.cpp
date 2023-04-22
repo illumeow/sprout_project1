@@ -49,8 +49,12 @@ bool check_inboard(Pos t) {
 
 bool check_eliminate(Pos *pos) {
   // TODO: Task 1-2
+  // if(pos==nullptr) => 傳回有無東西要消除就好
   // row: 01~08, 11~18, ..., 91~98
   // 橫的由左至右
+  if(pos==nullptr) {
+
+  }
   for(int i=0; i<BOARD_HEIGHT; i++) {
     for(int j=1; j<BOARD_WIDTH-1; j++) {  
       if(gameboard[i][j].type == gameboard[i][j-1].type && gameboard[i][j].type == gameboard[i][j+1].type) {
