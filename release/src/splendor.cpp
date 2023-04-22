@@ -41,7 +41,7 @@ int check_line(Pos p) {
 
 bool check_inboard(Pos t) {
   // TODO: Task 1-1
-  if(0<=t.x && t.x<BOARD_WIDTH && 0<=t.y && t.y<BOARD_HEIGHT) {
+  if(0 <= t.x && t.x < BOARD_WIDTH && 0 <= t.y && t.y < BOARD_HEIGHT) {
     return true;
   }
   return false;
