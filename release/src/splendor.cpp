@@ -49,26 +49,44 @@ bool check_inboard(Pos t) {
 
 bool check_eliminate(Pos *pos) {
   // TODO: Task 1-2
-  // if(pos==nullptr) => 傳回有無東西要消除就好
-  // row: 01~08, 11~18, ..., 91~98
-  // 橫的由左至右
+  /*
+  中心點範圍: row 01~98; column 10~89 
+  row偵測中心上下, column偵測左右
+  */
+  // if(pos==nullptr) => 傳回有無東西要消除就好(bool)
   if(pos==nullptr) {
-
-  }
-  for(int i=0; i<BOARD_HEIGHT; i++) {
-    for(int j=1; j<BOARD_WIDTH-1; j++) {  
-      if(gameboard[i][j].type == gameboard[i][j-1].type && gameboard[i][j].type == gameboard[i][j+1].type) {
-        pos->x = i;
-        pos->y = j;
-        return true;
+    // 先掃橫的(row)
+    for(int i=0; i<BOARD_WIDTH; i++) {
+      for(int j=1; j<BOARD_HEIGHT-1; j++) {
+        if(gameboard[i][j-1].type==gameboard[i][j].type && gameboard[i][j].type==gameboard[i][j+1].type && gameboard[i][j].type!=GEM_NULL) {
+          return true;
+        }
       }
     }
+    // 再掃直的(column)
+    for(int i=1; i<BOARD_WIDTH-1; i++) {
+      for(int j=0; j<BOARD_HEIGHT; j++) {
+        if(gameboard[i-1][j].type==gameboard[i][j].type && gameboard[i][j].type==gameboard[i+1][j].type && gameboard[i][j].type!=GEM_NULL) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
-  // column: 10~80, 11~81, ..., 19~89
-  // 橫的由左至右
-  for(int j=0; j<BOARD_WIDTH; j++) {  // 0~9
-    for(int i=1; i<BOARD_HEIGHT-1; i++) {  // 1~8
-      if(gameboard[i][j].type == gameboard[i-1][j].type && gameboard[i][j].type == gameboard[i+1][j].type) {
+  // not nullptr
+  for(int i=0; i<BOARD_WIDTH; i++) {
+      for(int j=1; j<BOARD_HEIGHT-1; j++) {
+        if(gameboard[i][j-1].type==gameboard[i][j].type && gameboard[i][j].type==gameboard[i][j+1].type && gameboard[i][j].type!=GEM_NULL) {
+          pos->x = i;
+          pos->y = j;
+          return true;
+        }
+      }
+    }
+  // 再掃直的(column)
+  for(int i=1; i<BOARD_WIDTH-1; i++) {
+    for(int j=0; j<BOARD_HEIGHT; j++) {
+      if(gameboard[i-1][j].type==gameboard[i][j].type && gameboard[i][j].type==gameboard[i+1][j].type && gameboard[i][j].type!=GEM_NULL) {
         pos->x = i;
         pos->y = j;
         return true;
@@ -81,14 +99,7 @@ bool check_eliminate(Pos *pos) {
 bool check_swap(Pos a, Pos b) {
   // TODO: Task 1-3
   // Q, z 不須連線 BOMB KILLSAME
-  if(gameboard[a.x][a.y].ability == ABI_BOMB || gameboard[a.x][a.y].ability == ABI_KILLSAME 
-    || gameboard[b.x][b.y].ability == ABI_BOMB || gameboard[b.x][b.y].ability == ABI_KILLSAME)
-  {
-    return true;
-  }
-  Gem tempboard[5][2];
   
-
   return 0;
 }
 
