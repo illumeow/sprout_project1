@@ -95,6 +95,16 @@ bool check_swap(Pos a, Pos b) {
     return true;
   }
   // swap(a, b) in gameboard then just check_eliminate(nullptr) and swap it back
+  swap_type_in_gameboard(a, b);
+  bool result = check_eliminate(nullptr);
+  swap_type_in_gameboard(a, b);
+  return result;
+}
+
+void swap_type_in_gameboard(Pos a, Pos b) {
+    int temp = gameboard[a.x][a.y].type;
+    gameboard[a.x][a.y].type = gameboard[b.x][b.y].type;
+    gameboard[b.x][b.y].type = temp;
 }
 
 void apply_bomb(Pos pos) {
