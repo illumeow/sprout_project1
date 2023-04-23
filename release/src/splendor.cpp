@@ -87,7 +87,14 @@ bool check_eliminate(Pos *pos) {
 
 bool check_swap(Pos a, Pos b) {
   // TODO: Task 1-3
-  // Q(ABI_BOMB), z(ABI_KILLSAME) 不須連線
+  // Q, z 不能替換
+  if(gameboard[a.x][a.y].ability == ABI_BOMB 
+  && gameboard[b.x][b.y].ability == ABI_KILLSAME 
+  || gameboard[b.x][b.y].ability == ABI_BOMB 
+  && gameboard[a.x][a.y].ability == ABI_KILLSAME) {
+    return false;
+  }
+  // Q, z 不須連線
   if(gameboard[a.x][a.y].ability == ABI_BOMB 
   || gameboard[a.x][a.y].ability == ABI_KILLSAME 
   || gameboard[b.x][b.y].ability == ABI_BOMB 
