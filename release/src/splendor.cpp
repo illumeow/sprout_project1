@@ -53,51 +53,31 @@ bool check_eliminate(Pos *pos) {
   /*
   中心點範圍: row 01~98; column 10~89 
   row偵測中心上下, column偵測左右
+  if(pos==nullptr) => 傳回有無東西要消除就好(bool)
   */
-  // if(pos==nullptr) => 傳回有無東西要消除就好(bool)
-  if(pos==nullptr) {
-    // 先掃橫的(row)
-    for(int i=0; i<BOARD_WIDTH; i++) {
-      for(int j=1; j<BOARD_HEIGHT-1; j++) {
-        if(gameboard[i][j-1].type==gameboard[i][j].type 
-        && gameboard[i][j].type==gameboard[i][j+1].type 
-        && gameboard[i][j].type!=GEM_NULL) {
-          return true;
-        }
-      }
-    }
-    // 再掃直的(column)
-    for(int i=1; i<BOARD_WIDTH-1; i++) {
-      for(int j=0; j<BOARD_HEIGHT; j++) {
-        if(gameboard[i-1][j].type==gameboard[i][j].type 
-        && gameboard[i][j].type==gameboard[i+1][j].type 
-        && gameboard[i][j].type!=GEM_NULL) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-  // not nullptr
   for(int i=0; i<BOARD_WIDTH; i++) {
-      for(int j=1; j<BOARD_HEIGHT-1; j++) {
-        if(gameboard[i][j-1].type==gameboard[i][j].type 
-        && gameboard[i][j].type==gameboard[i][j+1].type 
-        && gameboard[i][j].type!=GEM_NULL) {
+    for(int j=1; j<BOARD_HEIGHT-1; j++) {
+      if(gameboard[i][j-1].type==gameboard[i][j].type 
+      && gameboard[i][j].type==gameboard[i][j+1].type 
+      && gameboard[i][j].type!=GEM_NULL) {
+        if(pos!=nullptr) {
           pos->x = i;
           pos->y = j;
-          return true;
         }
+        return true;
       }
     }
+  }
   // 再掃直的(column)
   for(int i=1; i<BOARD_WIDTH-1; i++) {
     for(int j=0; j<BOARD_HEIGHT; j++) {
       if(gameboard[i-1][j].type==gameboard[i][j].type 
       && gameboard[i][j].type==gameboard[i+1][j].type 
       && gameboard[i][j].type!=GEM_NULL) {
-        pos->x = i;
-        pos->y = j;
+        if(pos!=nullptr) {
+            pos->x = i;
+            pos->y = j;
+        }
         return true;
       }
     }
