@@ -110,34 +110,43 @@ bool check_swap(Pos a, Pos b) {
 
 void elim_gem(Pos pos) {
   gameboard[pos.x][pos.y].type = GEM_NULL;
+  gameboard[pos.x][pos.y].ability = ABI_NULL;
+}
+
+void elim_gem_special(Pos pos) {
+  gameboard[pos.x][pos.y].type = GEM_NULL;
   if(gameboard[pos.x][pos.y].ability >= ABI_CROSS) apply_special({pos.x, pos.y}, pos);
   gameboard[pos.x][pos.y].ability = ABI_NULL;
 }
 
 void apply_bomb(Pos pos) {
   // TODO: Task 2-1
+  elim_gem(pos);
   for(int i=pos.x-2; i<=pos.x+2; i++) {
     for(int j=pos.y-2; j<=pos.y+2; j++) {
-      elim_gem({i, j});
+      elim_gem_special({i, j});
     }
   }
 }
 
 void apply_killsame(Pos pos, Pos tar) {
   // TODO: Task 2-2
+  elim_gem(pos);
   int tartype = gameboard[tar.x][tar.y].type==GEM_NULL?gen_rand_type():gameboard[tar.x][tar.y].type;
   for(int i=0; i<BOARD_HEIGHT; i++) {
     for(int j=0; j<BOARD_WIDTH; j++) {
-        if(gameboard[i][j].type == tartype) elim_gem({i, j});
+        if(gameboard[i][j].type == tartype) elim_gem_special({i, j});
     }
   }
 }
 
 void apply_cross(Pos pos) {
   // TODO: Task 2-3
-  for(int i=0; i<BOARD_WIDTH; i++) elim_gem({pos.x, i});
-  for(int i=0; i<BOARD_HEIGHT; i++) elim_gem({i, pos.y});
+  elim_gem(pos);
+  for(int i=0; i<BOARD_WIDTH; i++) elim_gem_special({pos.x, i});
+  for(int i=0; i<BOARD_HEIGHT; i++) elim_gem_special({i, pos.y});
 }
+
 
 void apply_special(Pos pos, Pos tar) {
   // TODO: Task 2-4
