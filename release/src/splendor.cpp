@@ -41,8 +41,8 @@ int check_line(Pos p) {
 
 bool check_inboard(Pos t) {
   // TODO: Task 1-1
-  if(0 <= t.x && t.x < BOARD_WIDTH 
-  && 0 <= t.y && t.y < BOARD_HEIGHT) {
+  if(0 <= t.x && t.x < BOARD_HEIGHT 
+  && 0 <= t.y && t.y < BOARD_WIDTH) {
     return true;
   }
   return false;
@@ -51,12 +51,12 @@ bool check_inboard(Pos t) {
 bool check_eliminate(Pos *pos) {
   // TODO: Task 1-2
   /*
-  中心點範圍: row 01~98; column 10~89 
-  row偵測中心上下, column偵測左右
+  中心點範圍: 01~98(偵測橫的); 10~89(偵測直的)
   if(pos==nullptr) => 傳回有無東西要消除就好(bool)
   */
-  for(int i=0; i<BOARD_WIDTH; i++) {
-    for(int j=1; j<BOARD_HEIGHT-1; j++) {
+  // 01~98
+  for(int i=0; i<BOARD_HEIGHT; i++) {
+    for(int j=1; j<BOARD_WIDTH-1; j++) {
       if(gameboard[i][j-1].type==gameboard[i][j].type 
       && gameboard[i][j].type==gameboard[i][j+1].type 
       && gameboard[i][j].type!=GEM_NULL) {
@@ -68,9 +68,9 @@ bool check_eliminate(Pos *pos) {
       }
     }
   }
-  // 再掃直的(column)
-  for(int i=1; i<BOARD_WIDTH-1; i++) {
-    for(int j=0; j<BOARD_HEIGHT; j++) {
+  // 10~89
+  for(int i=1; i<BOARD_HEIGHT-1; i++) {
+    for(int j=0; j<BOARD_WIDTH; j++) {
       if(gameboard[i-1][j].type==gameboard[i][j].type 
       && gameboard[i][j].type==gameboard[i+1][j].type 
       && gameboard[i][j].type!=GEM_NULL) {
@@ -94,7 +94,7 @@ bool check_swap(Pos a, Pos b) {
   || gameboard[b.x][b.y].ability == ABI_KILLSAME) {
     return true;
   }
-  
+  // swap(a, b) in gameboard then just check_eliminate(nullptr) and swap it back
 }
 
 void apply_bomb(Pos pos) {
