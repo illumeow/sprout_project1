@@ -42,9 +42,7 @@ int check_line(Pos p) {
 bool check_inboard(Pos t) {
   // TODO: Task 1-1
   if(0 <= t.x && t.x < BOARD_HEIGHT 
-  && 0 <= t.y && t.y < BOARD_WIDTH) {
-    return true;
-  }
+  && 0 <= t.y && t.y < BOARD_WIDTH) return true;
   return false;
 }
 
@@ -85,22 +83,24 @@ bool check_eliminate(Pos *pos) {
   return false;
 }
 
+void swap_type_in_gameboard(Pos a, Pos b) {
+    int temp = gameboard[a.x][a.y].type;
+    gameboard[a.x][a.y].type = gameboard[b.x][b.y].type;
+    gameboard[b.x][b.y].type = temp;
+}
+
 bool check_swap(Pos a, Pos b) {
   // TODO: Task 1-3
   // Q, z 不能替換
   if(gameboard[a.x][a.y].ability == ABI_BOMB 
   && gameboard[b.x][b.y].ability == ABI_KILLSAME 
   || gameboard[b.x][b.y].ability == ABI_BOMB 
-  && gameboard[a.x][a.y].ability == ABI_KILLSAME) {
-    return false;
-  }
+  && gameboard[a.x][a.y].ability == ABI_KILLSAME) return false;
   // Q, z 不須連線
   if(gameboard[a.x][a.y].ability == ABI_BOMB 
   || gameboard[a.x][a.y].ability == ABI_KILLSAME 
   || gameboard[b.x][b.y].ability == ABI_BOMB 
-  || gameboard[b.x][b.y].ability == ABI_KILLSAME) {
-    return true;
-  }
+  || gameboard[b.x][b.y].ability == ABI_KILLSAME) return true;
   // swap(a, b) in gameboard then just check_eliminate(nullptr) and swap it back
   swap_type_in_gameboard(a, b);
   bool result = check_eliminate(nullptr);
@@ -108,18 +108,29 @@ bool check_swap(Pos a, Pos b) {
   return result;
 }
 
-void swap_type_in_gameboard(Pos a, Pos b) {
-    int temp = gameboard[a.x][a.y].type;
-    gameboard[a.x][a.y].type = gameboard[b.x][b.y].type;
-    gameboard[b.x][b.y].type = temp;
-}
-
 void apply_bomb(Pos pos) {
   // TODO: Task 2-1
+  for(int i=pos.x-2; i<=pos.x+2; i++) {
+    for(int j=pos.y-2; j<=pos.y+2; j++) {
+      gameboard[i][j].type = GEM_NULL;
+      if(gameboard[i][j].ability != ABI_NORMAL) apply_special({i, j}, pos);
+      gameboard[i][j].ability = ABI_NULL;
+    }
+  }
 }
 
 void apply_killsame(Pos pos, Pos tar) {
   // TODO: Task 2-2
+  int tartype = gameboard[tar.x][tar.y].type==GEM_NULL?gen_rand_type():gameboard[tar.x][tar.y].type;
+  for(int i=0; i<BOARD_HEIGHT; i++) {
+    for(int j=0; j<BOARD_WIDTH; j++) {
+        if(gameboard[i][j].type == tartype) {
+          gameboard[i][j].type = GEM_NULL;
+          if(gameboard[i][j].ability != ABI_NORMAL) apply_special({i, j}, pos);
+          gameboard[i][j].ability = ABI_NULL;
+        }
+    }
+  }
 }
 
 void apply_cross(Pos pos) {
@@ -128,6 +139,9 @@ void apply_cross(Pos pos) {
 
 void apply_special(Pos pos, Pos tar) {
   // TODO: Task 2-4
+  if(gameboard[pos.x][pos.y].ability == ABI_BOMB) apply_bomb(pos);
+  else if(gameboard[pos.x][pos.y].ability == ABI_KILLSAME) apply_killsame(pos, tar);
+  else if(gameboard[pos.x][pos.y].ability == ABI_CROSS) apply_cross(pos);
 }
 
 void dropping() {
@@ -143,7 +157,7 @@ void dropping() {
         moved_tags[i][j] = 1;
     }
   }
-
+  // nobug
   for (int i = 0; i < BOARD_HEIGHT; ++i) {
     for (int j = 0; j < BOARD_WIDTH; ++j) {
       if (gameboard[i][j].ability == ABI_NULL) {
