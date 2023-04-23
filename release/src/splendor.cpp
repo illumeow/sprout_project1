@@ -148,6 +148,19 @@ void apply_special(Pos pos, Pos tar) {
 
 void dropping() {
   // TODO: Task 3
+  /* original code
+  for (int i = 0; i < BOARD_HEIGHT; ++i) {
+    for (int j = 0; j < BOARD_WIDTH; ++j) {
+      if (gameboard[i][j].ability != ABI_NULL) continue;
+      int curr_height = i;
+      while (check_inboard({curr_height, j}) and gameboard[curr_height][j].ability == ABI_NULL)
+        curr_height--;
+      if (check_inboard({curr_height, j}))
+        swap(gameboard[curr_height][j], gameboard[i][j]);
+        moved_tags[i][j] = 1;
+    }
+  }
+  */
   for (int i = 0; i < BOARD_HEIGHT; ++i) {
     for (int j = 0; j < BOARD_WIDTH; ++j) {
       if (gameboard[i][j].ability != ABI_NULL) continue;
