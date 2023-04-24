@@ -83,12 +83,6 @@ bool check_eliminate(Pos *pos) {
   return false;
 }
 
-void swap_type_in_gameboard(Pos a, Pos b) {
-    int temp = gameboard[a.x][a.y].type;
-    gameboard[a.x][a.y].type = gameboard[b.x][b.y].type;
-    gameboard[b.x][b.y].type = temp;
-}
-
 bool check_swap(Pos a, Pos b) {
   // TODO: Task 1-3
   // Q, z 不能替換
@@ -102,9 +96,9 @@ bool check_swap(Pos a, Pos b) {
   || gameboard[b.x][b.y].ability == ABI_BOMB 
   || gameboard[b.x][b.y].ability == ABI_KILLSAME) return true;
   // swap(a, b) in gameboard then just check_eliminate(nullptr) and swap it back
-  swap_type_in_gameboard(a, b);
+  swap(gameboard[a.x][a.y], gameboard[b.x][b.y]);
   bool result = check_eliminate(nullptr);
-  swap_type_in_gameboard(a, b);
+  swap(gameboard[a.x][a.y], gameboard[b.x][b.y]);
   return result;
 }
 
@@ -170,6 +164,7 @@ void dropping() {
     }
   }
   */
+  // bug: 只有空隙的最上面那一顆會掉下來，然後隨機生的寶石就會填滿盤面
   for (int i = 0; i < BOARD_HEIGHT; ++i) {
     for (int j = 0; j < BOARD_WIDTH; ++j) {
       if (gameboard[i][j].ability != ABI_NULL) continue;
