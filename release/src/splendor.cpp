@@ -151,32 +151,16 @@ void apply_special(Pos pos, Pos tar) {
 
 void dropping() {
   // TODO: Task 3
-  /* original code
   for (int i = 0; i < BOARD_HEIGHT; ++i) {
     for (int j = 0; j < BOARD_WIDTH; ++j) {
-      if (gameboard[i][j].ability != ABI_NULL) continue;
-      int curr_height = i;
+      if (gameboard[9-i][j].ability != ABI_NULL) continue;
+      int curr_height = 9-i;
       while (check_inboard({curr_height, j}) and gameboard[curr_height][j].ability == ABI_NULL)
         curr_height--;
-      if (check_inboard({curr_height, j}))
-        swap(gameboard[curr_height][j], gameboard[i][j]);
-        moved_tags[i][j] = 1;
+      if (check_inboard({curr_height, j})) swap(gameboard[curr_height][j], gameboard[9-i][j]), moved_tags[9-i][j] = 1;
     }
   }
-  */
-  // bug: 只有空隙的最上面那一顆會掉下來，然後隨機生的寶石就會填滿盤面
-  for (int i = 0; i < BOARD_HEIGHT; ++i) {
-    for (int j = 0; j < BOARD_WIDTH; ++j) {
-      if (gameboard[i][j].ability != ABI_NULL) continue;
-      int curr_height = i;
-      while (check_inboard({curr_height, j}) and gameboard[curr_height][j].ability == ABI_NULL)
-        curr_height--;
-      if (check_inboard({curr_height, j}))
-        swap(gameboard[curr_height][j], gameboard[i][j]);
-        moved_tags[i][j] = 1;
-    }
-  }
-  // nobug
+
   for (int i = 0; i < BOARD_HEIGHT; ++i) {
     for (int j = 0; j < BOARD_WIDTH; ++j) {
       if (gameboard[i][j].ability == ABI_NULL) {
@@ -389,7 +373,7 @@ void clean_color() {
 }
 
 void draw_board(int mode, int combo, int time = DRAW_PAUSE_TIME) {
-  cout << "\033[2J\033[1;1H";
+  // cout << "\033[2J\033[1;1H";
 
   if (mode == MODE_STEP) {
     cout << "STEP REMAINED: " << step_remained << "\nSCORE: " << player_score << " COMBO: " << combo;
