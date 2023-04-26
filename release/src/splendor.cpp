@@ -85,6 +85,13 @@ bool check_eliminate(Pos *pos) {
 
 bool check_swap(Pos a, Pos b) {
   // TODO: Task 1-3
+  // a or b not inboard
+  if(!check_inboard(a) || !check_inboard(b)) return false;
+  // not adjacent
+  if((a.x+1 == b.x && a.y == b.y)
+  && (a.x-1 == b.x && a.y == b.y)
+  && (a.x == b.x && a.y+1 == b.y)
+  && (a.x == b.x && a.y-1 == b.y)) return false;
   // Q, z 不能替換
   if(gameboard[a.x][a.y].ability == ABI_BOMB 
   && gameboard[b.x][b.y].ability == ABI_KILLSAME 
