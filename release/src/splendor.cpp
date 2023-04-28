@@ -116,7 +116,7 @@ void elim_gem(Pos pos) {
 
 void elim_gem_special(Pos pos) {
   gameboard[pos.x][pos.y].type = GEM_NULL;
-  if(gameboard[pos.x][pos.y].ability >= ABI_CROSS) apply_special({pos.x, pos.y}, pos);
+  if(gameboard[pos.x][pos.y].ability >= ABI_CROSS) apply_special(pos, pos);
   gameboard[pos.x][pos.y].ability = ABI_NULL;
 }
 
