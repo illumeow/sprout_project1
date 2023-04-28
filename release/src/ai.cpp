@@ -2,56 +2,74 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-Gem my_gameboard[BOARD_HEIGHT][BOARD_WIDTH];
+#define STOP 100
 
-bool check_eliminate(Pos *pos) {
-  // 01~98
-  for(int i=0; i<BOARD_HEIGHT; i++) {
-    for(int j=1; j<BOARD_WIDTH-1; j++) {
-      if(my_gameboard[i][j-1].type==my_gameboard[i][j].type 
-      && my_gameboard[i][j].type==my_gameboard[i][j+1].type 
-      && my_gameboard[i][j].type!=GEM_NULL) {
-        if(pos!=nullptr) {
-          pos->x = i;
-          pos->y = j;
-        }
-        return true;
-      }
-    }
-  }
-  // 10~89
-  for(int i=1; i<BOARD_HEIGHT-1; i++) {
-    for(int j=0; j<BOARD_WIDTH; j++) {
-      if(my_gameboard[i-1][j].type==my_gameboard[i][j].type 
-      && my_gameboard[i][j].type==my_gameboard[i+1][j].type 
-      && my_gameboard[i][j].type!=GEM_NULL) {
-        if(pos!=nullptr) {
-            pos->x = i;
-            pos->y = j;
-        }
-        return true;
-      }
-    }
-  }
-  return false;
+
+Gem my_gameboard[BOARD_HEIGHT][BOARD_WIDTH];
+int type_list[GEM_CNT];
+bool have_special = false;
+GemData special[BOARD_HEIGHT*BOARD_WIDTH];
+
+
+void remove_gem_ability(Pos pos) {
+  my_gameboard[pos.x][pos.y].ability = ABI_NULL;
 }
 
-bool check_swap(Pos a, Pos b) {
-  // Q, z 不能替換
-  if(my_gameboard[a.x][a.y].ability == ABI_BOMB 
-  && my_gameboard[b.x][b.y].ability == ABI_KILLSAME 
-  || my_gameboard[b.x][b.y].ability == ABI_BOMB 
-  && my_gameboard[a.x][a.y].ability == ABI_KILLSAME) return false;
-  // Q, z 不須連線
-  if(my_gameboard[a.x][a.y].ability == ABI_BOMB 
-  || my_gameboard[a.x][a.y].ability == ABI_KILLSAME 
-  || my_gameboard[b.x][b.y].ability == ABI_BOMB 
-  || my_gameboard[b.x][b.y].ability == ABI_KILLSAME) return true;
-  // swap(a, b) in my_gameboard then just check_eliminate(nullptr) and swap it back
-  swap(my_gameboard[a.x][a.y], my_gameboard[b.x][b.y]);
-  bool result = check_eliminate(nullptr);
-  swap(my_gameboard[a.x][a.y], my_gameboard[b.x][b.y]);
-  return result;
+void recover_gem_ability(Pos pos, int ability) {
+  my_gameboard[pos.x][pos.y].ability = ability;
+}
+
+void remove_gem_ability_special(Pos pos, int &elim_cnt) {
+  if(my_gameboard[pos.x][pos.y].ability >= ABI_CROSS) check_special({pos.x, pos.y}, pos, elim_cnt);
+  my_gameboard[pos.x][pos.y].ability = ABI_NULL;
+}
+
+void check_bomb(Pos pos, int &elim_cnt) {
+  remove_gem_ability(pos);
+  for(int i=pos.x-2; i<=pos.x+2; i++) {
+    if(i < 0) i = 0;
+    else if(i>=BOARD_HEIGHT) i = BOARD_HEIGHT;
+    for(int j=pos.y-2; j<=pos.y+2; j++) {
+      if(j < 0) j = 0;
+      else if(j>=BOARD_WIDTH) j = BOARD_WIDTH;
+      elim_cnt++;
+      remove_gem_ability_special({i, j}, elim_cnt);
+    }
+  }
+  recover_gem_ability(pos, ABI_BOMB);
+}
+
+void check_killsame(Pos pos, Pos tar, int &elim_cnt) {
+  remove_gem_ability(pos);
+  /*elim by Q, z*/
+  if(tar.x == -1) {
+    elim_cnt += type_list[gen_rand_type()-1];
+    return;
+  }
+  for(int i=0; i<BOARD_HEIGHT; i++) {
+    for(int j=0; j<BOARD_WIDTH; j++) {
+        if(my_gameboard[i][j].type == my_gameboard[tar.x][tar.y].type){
+          elim_cnt++;
+          remove_gem_ability_special({i, j}, elim_cnt);
+        }
+    }
+  }
+  recover_gem_ability(pos, ABI_KILLSAME);
+}
+
+void check_cross(Pos pos, int &elim_cnt) {
+  remove_gem_ability(pos);
+  elim_cnt += BOARD_HEIGHT+BOARD_WIDTH-1;
+  for(int i=0; i<BOARD_WIDTH; i++) remove_gem_ability_special({pos.x, i}, elim_cnt);
+  for(int i=0; i<BOARD_HEIGHT; i++) remove_gem_ability_special({i, pos.y}, elim_cnt);
+  recover_gem_ability(pos, ABI_CROSS);
+}
+
+
+void check_special(Pos pos, Pos tar, int &elim_cnt) {
+  if(my_gameboard[pos.x][pos.y].ability == ABI_BOMB) check_bomb(pos, elim_cnt);
+  else if(my_gameboard[pos.x][pos.y].ability == ABI_KILLSAME) check_killsame(pos, tar, elim_cnt);
+  else if(my_gameboard[pos.x][pos.y].ability == ABI_CROSS) check_cross(pos, elim_cnt);
 }
 
 void ai(Pos& pos1, Pos& pos2) {
@@ -60,18 +78,44 @@ void ai(Pos& pos1, Pos& pos2) {
   初步想法: 
   優先消除特殊寶石，掃過盤面知道每種寶石各有幾個
   之後用"能消除多少寶石"來決定要消除哪個特殊寶石
+  4/28: 遞迴check elim_cnt
   若沒有特殊寶石則試著做出來，都做不出來就隨機選一個消除?
   不確定能不能預測drop以後的結果(不含新生成的)來決定
   4/25 edit:
-  可以直接模擬盤面掉落的情形
+  可以直接模擬盤面掉落的情形: NO!!!!
   用dropping()的code
   注意: check_xxx()的執行對象是gameboard, 所以不一定能用
   check_inboard()可以。
+  4/28 edit:
+  [不能]暴力遞迴模擬。
   */
+
   // You should remove the code below and determine the four values by yourself.
+  int index = 0;
+  int eli_cnt[BOARD_HEIGHT * BOARD_WIDTH];
+  // sweep over the gameboard and record special(also bool) atst
   for(int i=0; i<BOARD_HEIGHT; i++) {
     for(int j=0; j<BOARD_WIDTH; j++) {
-        my_gameboard[i][j] = get_gem({i, j});
+        Gem tmp = get_gem({i, j});
+        my_gameboard[i][j] = tmp;
+        type_list[tmp.type]++;
+        if(tmp.ability >= ABI_CROSS) {
+          have_special = true;
+          special[index++] = {{i, j}, {tmp.type, tmp.ability}}; 
+        }
+    }
+  }
+
+  /* special comes first */
+  if(have_special) {
+    // for each special(GemData)
+    for(int i=0; i<index; i++) {
+      GemData sgem = special[i];
+      int abi = sgem.gem.ability;
+      Pos pos = sgem.pos;
+      if(abi == ABI_CROSS) check_cross(pos, eli_cnt[i]);
+      else if(abi == ABI_BOMB) check_bomb(pos, eli_cnt[i]);
+      else if(abi == ABI_KILLSAME) check_killsame(pos, {-1, -1}, eli_cnt[i]);
     }
   }
 
