@@ -124,7 +124,11 @@ void apply_bomb(Pos pos) {
   // TODO: Task 2-1
   elim_gem(pos);
   for(int i=pos.x-2; i<=pos.x+2; i++) {
+    if(i < 0) i = 0;
+    else if(i>=BOARD_HEIGHT) i = BOARD_HEIGHT;
     for(int j=pos.y-2; j<=pos.y+2; j++) {
+      if(j < 0) j = 0;
+      else if(j>=BOARD_WIDTH) j = BOARD_WIDTH;
       elim_gem_special({i, j});
     }
   }
