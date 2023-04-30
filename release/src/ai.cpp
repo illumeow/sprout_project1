@@ -36,6 +36,7 @@ void output_my_gameboard() {
   }
   cout << "\n";
 }
+
 void init_typelist() {
   for(int i=0; i<6; i++) {
     type_list[i] = 0;
@@ -57,7 +58,7 @@ void remove_gem_ability_special(Pos pos, int &elim_cnt) {
   my_gameboard[pos.x][pos.y].ability = ABI_NULL;
 }
 
-void check_cross(Pos pos, Pos &elim_tar, int &elim_cnt) {
+void check_cross(Pos pos, int &elim_cnt) {
   remove_gem_ability(pos);
   elim_cnt += BOARD_HEIGHT+BOARD_WIDTH-1;
   for(int i=0; i<BOARD_WIDTH; i++) remove_gem_ability_special({pos.x, i}, elim_cnt);
@@ -69,7 +70,7 @@ void check_bomb(Pos pos, int &elim_cnt) {
   remove_gem_ability(pos);
   for(int i=pos.x-2; i<=pos.x+2; i++) {
     for(int j=pos.y-2; j<=pos.y+2; j++) {
-      if(check_inboard(i, j)) elim_cnt++;
+      if(check_inboard({i, j})) elim_cnt++;
       remove_gem_ability_special({i, j}, elim_cnt);
     }
   }
@@ -222,7 +223,7 @@ void ai(Pos& pos1, Pos& pos2) {
           max_eli = eli_data[i].cnt;
           pos1 = eli_data[i].pos;
           if(my_gameboard[pos1.x][pos1.y].ability == ABI_CROSS) {
-            
+            blablabla;
           }
           if(my_gameboard[pos1.x][pos1.y].ability == ABI_BOMB) {
             for(int i=0; i<4; i++) {
