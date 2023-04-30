@@ -10,7 +10,7 @@ bool moved_tags[BOARD_HEIGHT][BOARD_WIDTH];
 bool elimi_tags[BOARD_HEIGHT][BOARD_WIDTH];
 bool visited[BOARD_HEIGHT][BOARD_WIDTH];
 int success_line[BOARD_HEIGHT][BOARD_WIDTH] = {};
-Pos dir[4] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+Pos dir[4] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}}; // up, right, down, left
 static int step_remained = STEP_LIMIT;
 static int step_used = 0;
 static int player_score = 0;
@@ -46,35 +46,29 @@ bool check_inboard(Pos t) {
   return false;
 }
 
+bool is_line(Pos p) {
+  int curr_gem = gameboard[p.x][p.y].type;
+  bool ret = false;
+  if (curr_gem == GEM_NULL) return ret;
+  if (p.x != 0 && p.x != BOARD_HEIGHT-1 && 
+      curr_gem == gameboard[p.x-1][p.y].type && 
+      curr_gem == gameboard[p.x+1][p.y].type)
+    ret = true;
+  if (p.y != 0 && p.y != BOARD_WIDTH-1 && 
+      curr_gem == gameboard[p.x][p.y-1].type && 
+      curr_gem == gameboard[p.x][p.y+1].type)
+    ret = true;
+  return ret;
+}
+
 bool check_eliminate(Pos *pos) {
   // TODO: Task 1-2
-  /*
-  中心點範圍: 01~98(偵測橫的); 10~89(偵測直的)
-  if(pos==nullptr) => 傳回有無東西要消除就好(bool)
-  */
-  // 01~98
   for(int i=0; i<BOARD_HEIGHT; i++) {
-    for(int j=1; j<BOARD_WIDTH-1; j++) {
-      if(gameboard[i][j-1].type==gameboard[i][j].type 
-      && gameboard[i][j].type==gameboard[i][j+1].type 
-      && gameboard[i][j].type!=GEM_NULL) {
+    for(int j=0; j<BOARD_WIDTH; j++) {
+      if(is_line({i, j})) {
         if(pos!=nullptr) {
           pos->x = i;
           pos->y = j;
-        }
-        return true;
-      }
-    }
-  }
-  // 10~89
-  for(int i=1; i<BOARD_HEIGHT-1; i++) {
-    for(int j=0; j<BOARD_WIDTH; j++) {
-      if(gameboard[i-1][j].type==gameboard[i][j].type 
-      && gameboard[i][j].type==gameboard[i+1][j].type 
-      && gameboard[i][j].type!=GEM_NULL) {
-        if(pos!=nullptr) {
-            pos->x = i;
-            pos->y = j;
         }
         return true;
       }
@@ -90,15 +84,17 @@ bool check_swap(Pos a, Pos b) {
   // not adjacent
   if(dist_sq(a, b) > 1) return false;
   // Q, z 不能替換
-  if(gameboard[a.x][a.y].ability == ABI_BOMB 
-  && gameboard[b.x][b.y].ability == ABI_KILLSAME 
-  || gameboard[b.x][b.y].ability == ABI_BOMB 
-  && gameboard[a.x][a.y].ability == ABI_KILLSAME) return false;
+  if (gameboard[a.x][a.y].ability == ABI_BOMB &&
+      gameboard[b.x][b.y].ability == ABI_KILLSAME ||
+      gameboard[b.x][b.y].ability == ABI_BOMB &&
+      gameboard[a.x][a.y].ability == ABI_KILLSAME) 
+    return false;
   // Q, z 不須連線
-  if(gameboard[a.x][a.y].ability == ABI_BOMB 
-  || gameboard[a.x][a.y].ability == ABI_KILLSAME 
-  || gameboard[b.x][b.y].ability == ABI_BOMB 
-  || gameboard[b.x][b.y].ability == ABI_KILLSAME) return true;
+  if (gameboard[a.x][a.y].ability == ABI_BOMB ||
+      gameboard[a.x][a.y].ability == ABI_KILLSAME ||
+      gameboard[b.x][b.y].ability == ABI_BOMB ||
+      gameboard[b.x][b.y].ability == ABI_KILLSAME) 
+    return true;
   // swap(a, b) in gameboard then just check_eliminate(nullptr) and swap it back
   swap(gameboard[a.x][a.y], gameboard[b.x][b.y]);
   bool result = check_eliminate(nullptr);
