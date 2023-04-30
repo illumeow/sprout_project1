@@ -482,6 +482,9 @@ bool check_str_int(string str) {
   return 1;
 }
 
+
+clock_t start_time, end_time;
+double cur_time, total_time;
 int main_game(int mode) {
   int running = 1;
   int step = 0;
@@ -490,8 +493,12 @@ int main_game(int mode) {
     Pos a, b;
 
 #ifdef AI
-    cout << "call ai" << '\n';
+    start_time = clock();
     ai (a, b);
+    end_time = clock();
+    cur_time = (end_time-start_time)/1000.0;
+    cout << "used " << cur_time << " second\n";
+    total_time += cur_time;
 
     step_remained--;
     step_used++;
@@ -500,6 +507,7 @@ int main_game(int mode) {
       draw_board(mode, 0);
     }
     else if (game_end(mode)) {
+      cout << "total_time: " << total_time << " seconds\n";
       break;
     }
     else {
