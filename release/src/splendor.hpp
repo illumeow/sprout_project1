@@ -30,7 +30,7 @@
 #define ABI_CNT 5
 
 #define DRAW_PAUSE_TIME 500
-#define RND_SEED 1
+#define RND_SEED 10
 
 #define STEP_LIMIT 10
 #define SCORE_TARGET 18000
@@ -69,3 +69,7 @@ bool check_dead();
 
 void draw_board(int, int, int);
 void ai(Pos&, Pos&);
+
+int get_score();
+
+std::string get_color(int);
