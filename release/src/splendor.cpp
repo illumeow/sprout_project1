@@ -88,10 +88,7 @@ bool check_swap(Pos a, Pos b) {
   // a or b not inboard
   if(!check_inboard(a) || !check_inboard(b)) return false;
   // not adjacent
-  if((a.x+1 == b.x && a.y == b.y)
-  && (a.x-1 == b.x && a.y == b.y)
-  && (a.x == b.x && a.y+1 == b.y)
-  && (a.x == b.x && a.y-1 == b.y)) return false;
+  if(dist_sq(a, b) > 1) return false;
   // Q, z 不能替換
   if(gameboard[a.x][a.y].ability == ABI_BOMB 
   && gameboard[b.x][b.y].ability == ABI_KILLSAME 
@@ -185,7 +182,7 @@ void dropping() {
 }
 
 int menu() {
-  cout << "\033[2J\033[1;1H";
+  // cout << "\033[2J\033[1;1H";
   int game_mode = 0;
   cout << "======================================\n\n"
        << " Welcome to Sprout Crush!\n\n"
@@ -493,6 +490,7 @@ int main_game(int mode) {
     Pos a, b;
 
 #ifdef AI
+    cout << "call ai" << '\n';
     ai (a, b);
 
     step_remained--;
@@ -578,4 +576,8 @@ int main_game(int mode) {
   cout << endl;
   this_thread::sleep_for(chrono::milliseconds(3000));
   return 0;
+}
+
+int get_score() {
+  return player_score;
 }
