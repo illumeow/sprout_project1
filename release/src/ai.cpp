@@ -5,16 +5,8 @@ using namespace std;
 
 Gem my_gameboard[BOARD_HEIGHT][BOARD_WIDTH];
 int type_list[GEM_CNT];
-bool have_special = false;
-GemData special[BOARD_HEIGHT*BOARD_WIDTH];
 Pos direc[4] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}}; // down right up left
-int index;
-ElimData eli_data[BOARD_HEIGHT * BOARD_WIDTH];
-GemData current_gem;
-int abi;
-Pos pos, tar;
-int cur_type;
-int tmp_cnt;
+
 
 struct tarData{
   Pos target;
@@ -77,7 +69,7 @@ void remove_gem_special(Pos pos, Pos elim_by, int &elim_cnt) {
 tarData tar_available[4];
 bool one, two, three;
 Pos tmp_tar;
-int max_cnt;
+int max_cnt, cur_type, tmp_cnt;
 void check_cross(Pos pos, Pos &tar, int &elim_cnt) {
   cur_type = my_gameboard[pos.x][pos.y].type;
   for(int i=0; i<4; i++) tar_available[i].available = false;
@@ -326,6 +318,12 @@ bool check_my_eliminate() {
   return false;
 }
 
+bool have_special = false;
+GemData special[BOARD_HEIGHT*BOARD_WIDTH];
+int index;
+ElimData eli_data[BOARD_HEIGHT * BOARD_WIDTH];
+GemData current_gem;
+int abi;
 int max_eli, cur_eli;
 Pos cur_pos, cur_tar;
 void ai(Pos& pos1, Pos& pos2) {
@@ -377,17 +375,17 @@ void ai(Pos& pos1, Pos& pos2) {
     for(int i=0; i<index; i++) {
       current_gem = special[i];
       abi = current_gem.gem.ability;
-      pos = current_gem.pos;
+      cur_pos = current_gem.pos;
 
-      eli_data[i].pos = pos;
+      eli_data[i].pos = current_gem.pos;
       if(abi == ABI_CROSS) {
-        check_cross(pos, eli_data[i].tar, eli_data[i].cnt);
+        check_cross(cur_pos, eli_data[i].tar, eli_data[i].cnt);
       }
       else if(abi == ABI_BOMB) {
-        check_bomb(pos, eli_data[i].tar, eli_data[i].cnt);
+        check_bomb(cur_pos, eli_data[i].tar, eli_data[i].cnt);
       }
       else if(abi == ABI_KILLSAME) {
-        check_killsame(pos, eli_data[i].tar, eli_data[i].cnt);
+        check_killsame(cur_pos, eli_data[i].tar, eli_data[i].cnt);
       }
 
       max_eli = 0;
@@ -413,17 +411,16 @@ void ai(Pos& pos1, Pos& pos2) {
   for (int i = 0; i < BOARD_HEIGHT; i++) {
     for (int j = 0; j < BOARD_WIDTH; j++) {
       for(int k=0; k<2; k++) {
-        tar = {i+direc[k].x, j+direc[k].y};
-        if(!check_inboard(tar)) continue;
-        swap(my_gameboard[i][j], my_gameboard[tar.x][tar.y]);
+        // down then right
+        cur_tar = {i+direc[k].x, j+direc[k].y};
+        if(!check_inboard(cur_tar)) continue;
+        swap(my_gameboard[i][j], my_gameboard[cur_tar.x][cur_tar.y]);
         bool result = check_my_eliminate();
-        swap(my_gameboard[i][j], my_gameboard[tar.x][tar.y]);
+        swap(my_gameboard[i][j], my_gameboard[cur_tar.x][cur_tar.y]);
         if(result) {
           output_my_gameboard();
           pos1 = {i, j};
-          pos2 = tar;
-          //cout << pos1.x << " " << pos1.y << '\n';
-          //cout << pos2.x << " " << pos2.y << '\n';
+          pos2 = cur_tar;
           return;
         }
       } 
