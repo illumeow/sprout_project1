@@ -74,11 +74,13 @@ void remove_gem_special(Pos pos, Pos elim_by, int &elim_cnt) {
   my_gameboard[pos.x][pos.y].ability = ABI_NULL;
 }
 
+
 tarData tar_available[4];
 bool one, two, three;
 Pos tmp_tar;
-int max_cnt, cur_type, tmp_cnt;
-void check_cross(Pos pos, Pos &tar, int &elim_cnt) {
+int cur_type, tmp_cnt;
+
+void check_cross(Pos &pos, Pos &tar, int &elim_cnt) {
   cur_type = my_gameboard[pos.x][pos.y].type;
   for(int i=0; i<4; i++) tar_available[i].available = false;
   one = true;
@@ -86,7 +88,7 @@ void check_cross(Pos pos, Pos &tar, int &elim_cnt) {
   three = true;
   remove_gem(pos);
   // + 動
-  if((pos.x != tar.x) || (pos.y!=tar.y)) {
+  if(dist_sq(pos, tar) > 0) {
     for(int i=0; i<4; i++) {
       if(i == 0) {
         if(check_inboard({pos.x+1, pos.y})) {
@@ -191,30 +193,32 @@ void check_cross(Pos pos, Pos &tar, int &elim_cnt) {
       if(one || two || three) {
         tar_available[i].target = {pos.x+direc[i].x, pos.y+direc[i].y};
         tar_available[i].available = true;
+        break;
       }    
     }
     // + 動了沒用
-    if ( !(tar_available[0].available) 
-      && !(tar_available[1].available)
-      && !(tar_available[2].available)
-      && !(tar_available[3].available)) 
-      tar = {BOARD_HEIGHT, BOARD_WIDTH};
-    else {
-      max_cnt = 0;
+    if(!(tar_available[0].available) 
+    && !(tar_available[1].available)
+    && !(tar_available[2].available)
+    && !(tar_available[3].available)) {
+      // 別人過來
       for(int i=0; i<4; i++) {
-        if(tar_available[i].available) {
-          tmp_tar = tar_available[i].target;
-          tmp_cnt = 0;
-          for(int i=0; i<BOARD_WIDTH; i++) {
-            if(my_gameboard[tmp_tar.x][i].type > GEM_NULL) tmp_cnt++;
-          }
-          for(int i=0; i<BOARD_HEIGHT; i++) {
-            if(my_gameboard[i][tmp_tar.y].type > GEM_NULL) tmp_cnt++;
+        tar = {pos.x+direc[i].x, pos.y+direc[i].y};
+        if(cur_type == my_gameboard[tar.x][tar.y].type) {
+          for(int j=0; j<4; j++) {
+            Pos tmp_tar = {tar.x+direc[i].x, tar.y+direc[i].y};
+            if(tmp_tar.x != pos.x || tmp_tar.y != pos.y) {
+              pos = tmp_tar;
+            }
           }
         }
-        if(tmp_cnt > max_cnt) {
-          max_cnt = tmp_cnt;
-          tar = tmp_tar;
+      } 
+    } 
+    // + 可動
+    else {
+      for(int i=0; i<4; i++) {
+        if(tar_available[i].available) {
+          tar = tar_available[i].target;
         }
       }
       for(int i=0; i<BOARD_WIDTH; i++) {
@@ -249,7 +253,7 @@ void check_cross(Pos pos, Pos &tar, int &elim_cnt) {
   recover_gem(pos, cur_type, ABI_CROSS);
 }
 
-void check_bomb(Pos pos, Pos tar, int &elim_cnt) {
+void check_bomb(Pos pos, Pos &tar, int &elim_cnt) {
   remove_gem(pos);
   for(int i=0; i<4; i++) {
     tar = {pos.x+direc[i].x, pos.y+direc[i].y};
@@ -271,7 +275,7 @@ void check_bomb(Pos pos, Pos tar, int &elim_cnt) {
 void check_killsame(Pos pos, Pos elim_by, int &elim_cnt) {
   /*elim by z*/
   if(my_gameboard[elim_by.x][elim_by.y].ability == ABI_KILLSAME) {
-    elim_cnt = -10;
+    elim_cnt = -100;
     return;
   }
 
@@ -364,10 +368,8 @@ void my_special_dfs(Pos pos, ElimiData *data) {
 
 int check_gen_special(Pos pos) {
   ElimiData data = {0, 0, 0};
-  cout << "start dfs" << '\n';
   my_special_dfs(pos, &data);
-  // cout << "end dfs" << '\n';
-  int ret = ABI_NULL;
+  int ret = ABI_NORMAL;
   if (data.total_elimi == 4) {
     ret = ABI_CROSS;
   }
@@ -382,10 +384,11 @@ int check_gen_special(Pos pos) {
 }
 
 int my_elimi_special() {
-  // reset visited array for eli_dfs
+  // reset my_visited for my_special_dfs
   for (int i = 0; i < BOARD_HEIGHT-5; ++i) {
     for (int j = 0; j < BOARD_WIDTH-5; ++j) {
       my_visited[i][j] = 0;
+      my_elimi_tags[i][j] = 0;
     }
   }
   // cout << "reseted visited" << '\n';
@@ -410,7 +413,6 @@ int my_elimi_special() {
       my_elimi_tags[i][j] = 1;
     }
   }
-  // cout << "gem taged" << '\n';
   // check if five_times_five_board can gen any special gem
   for (int i = 0; i < BOARD_HEIGHT-5; ++i) {
     for (int j = 0; j < BOARD_WIDTH-5; ++j) {
@@ -437,8 +439,11 @@ void output_deque() {
   cout << '\n';
   for(auto i: five_times_five_board) {
     for(auto j: i) {
-      cout << j << ' ';
+        string color = get_color(j);
+        string ansi = "\x1b[" + color + "m";
+        cout << ansi << "x ";
     }
+    cout << "\x1b[0m";
     cout << '\n';
   }
 }
@@ -448,7 +453,7 @@ bool check_adjacent(Pos a, Pos b) {
 }
 
 
-bool have_special = false;
+bool have_special;
 GemData special[BOARD_HEIGHT*BOARD_WIDTH];
 int indx;
 ElimData eli_data[BOARD_HEIGHT * BOARD_WIDTH];
@@ -479,6 +484,7 @@ void ai(Pos& pos1, Pos& pos2) {
   // You should remove the code below and determine the four values by yourself.
   indx = 0;
   init_typelist();
+  have_special = false;
   // sweep over the gameboard and record special(also bool) at the same time
   for(int i=0; i<BOARD_HEIGHT; i++) {
     for(int j=0; j<BOARD_WIDTH; j++) {
@@ -511,7 +517,20 @@ void ai(Pos& pos1, Pos& pos2) {
         check_bomb(cur_pos, eli_data[i].tar, eli_data[i].cnt);
       }
       else if(abi == ABI_KILLSAME) {
-        check_killsame(cur_pos, eli_data[i].tar, eli_data[i].cnt);
+        Pos tar;
+        int tmp_cnt[4];
+        for(int j=0; j<4; j++) {
+          tar = {cur_pos.x+direc[i].x, cur_pos.y+direc[i].y};
+          if(check_inboard(tar)) 
+            check_killsame(cur_pos, tar, tmp_cnt[i]);
+        }
+        int max_cnt = 0;
+        for(int j=0; j<4; j++) {
+          if(tmp_cnt[j] > max_cnt) {
+            max_cnt = tmp_cnt[j];
+            eli_data[i].tar = {cur_pos.x+direc[i].x, cur_pos.y+direc[i].y};
+          }
+        }
       }
 
       max_eli = 0;
@@ -539,7 +558,7 @@ void ai(Pos& pos1, Pos& pos2) {
   // init deque, indx, map
   indx = 0;
   copy_board_to_deque(0, 0);
-  output_deque();
+  // output_deque();
   map<int, int> ability_cnt = {
     {ABI_CROSS, 0},
     {ABI_BOMB, 0},
@@ -557,15 +576,14 @@ void ai(Pos& pos1, Pos& pos2) {
       for(int j=0; j<BOARD_WIDTH-5; j++) {
         if(brk) break;
         Pos pos = {i, j};
-        for(int k=0; k<4; k++) {
+        for(int k=0; k<2; k++) {
           Pos tar = {pos.x+direc[k].x, pos.y+direc[k].y};
           if(check_indeque(tar)) {
             // cout << "\ncheck deque" << '\n';
             swap(five_times_five_board[pos.x][pos.y], five_times_five_board[tar.x][tar.y]);
             int special_type = my_elimi_special();
-            // cout << "alive" << '\n';
             swap(five_times_five_board[pos.x][pos.y], five_times_five_board[tar.x][tar.y]);
-            
+            // cout << special_type << '\n';
             if(special_type >= ABI_CROSS) {
               special_and_poses[indx].abi_type = special_type;
               special_and_poses[indx].pos = {pos.x+shift_down, pos.y+shift_right};
@@ -576,6 +594,7 @@ void ai(Pos& pos1, Pos& pos2) {
                 if(2 <= shift_down && shift_down <= 3
                 && 2 <= shift_right && shift_right <= 3)
                   special_and_poses[indx].cnt = 1;
+                indx++;
                 break;
               }
               indx++;
@@ -604,14 +623,16 @@ void ai(Pos& pos1, Pos& pos2) {
       shift_down++;
       copy_board_to_deque(shift_down, 0);
     }
+    // output_deque();
   }
 
   if(indx > 0) {
     // can gen special
+    cout << "gennable\n";
     ElimData special_pos;
     if(ability_cnt[ABI_BOMB] > 0) {
       for(int i=0; i<indx; i++) {
-        special_pos = special_and_poses[indx];
+        special_pos = special_and_poses[i];
         if(special_pos.abi_type == ABI_BOMB) {
           pos1 = special_pos.pos;
           pos2 = special_pos.tar;
@@ -622,7 +643,7 @@ void ai(Pos& pos1, Pos& pos2) {
     }
     else if(ability_cnt[ABI_KILLSAME] > 0) {
       for(int i=0; i<indx; i++) {
-        special_pos = special_and_poses[indx];
+        special_pos = special_and_poses[i];
         if(special_pos.abi_type == ABI_KILLSAME) {
           pos1 = special_pos.pos;
           pos2 = special_pos.tar;
@@ -632,7 +653,7 @@ void ai(Pos& pos1, Pos& pos2) {
     }
     else {
       for(int i=0; i<indx; i++) {
-        special_pos = special_and_poses[indx];
+        special_pos = special_and_poses[i];
         if(special_pos.abi_type == ABI_CROSS) {
           pos1 = special_pos.pos;
           pos2 = special_pos.tar;
@@ -677,9 +698,9 @@ void ai(Pos& pos1, Pos& pos2) {
               elims[indx].cnt++;
             }
           }
+          indx++;
         }
         swap(my_gameboard[i][j], my_gameboard[cur_tar.x][cur_tar.y]);
-        indx++;
       } 
     }
   }
