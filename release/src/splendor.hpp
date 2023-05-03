@@ -30,7 +30,7 @@
 #define ABI_CNT 5
 
 #define DRAW_PAUSE_TIME 500
-#define RND_SEED 10
+#define RND_SEED 1
 
 #define STEP_LIMIT 10
 #define SCORE_TARGET 18000

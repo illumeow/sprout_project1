@@ -42,7 +42,8 @@ int check_line(Pos p) {
 bool check_inboard(Pos t) {
   // TODO: Task 1-1
   if(0 <= t.x && t.x < BOARD_HEIGHT 
-  && 0 <= t.y && t.y < BOARD_WIDTH) return true;
+  && 0 <= t.y && t.y < BOARD_WIDTH) 
+    return true;
   return false;
 }
 
@@ -503,7 +504,6 @@ int main_game(int mode) {
       draw_board(mode, 0);
     }
     else if (game_end(mode)) {
-      cout << "total_time: " << total_time << " seconds\n";
       break;
     }
     else {
@@ -568,6 +568,7 @@ int main_game(int mode) {
 
     if (game_end(mode)) running = 0;
   } while (running);
+  cout << "total_time: " << total_time << " seconds\n";
   cout << "\nGame over!";
   if (mode == MODE_STEP && player_score > best_score) {
     best_score = player_score;
