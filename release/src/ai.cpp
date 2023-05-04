@@ -4,14 +4,10 @@ using namespace std;
 
 
 Gem my_gameboard[BOARD_HEIGHT][BOARD_WIDTH];
+Gem my_gameboard_backup[BOARD_HEIGHT][BOARD_WIDTH];
 int type_list[GEM_CNT];
 Pos direc[4] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}}; // down right up left
 
-
-struct tarData{
-  Pos target;
-  bool available;
-};
 
 struct ElimData{
   Pos pos;
@@ -20,6 +16,25 @@ struct ElimData{
   int abi_type;
 };
 
+
+void cout_pos(Pos pos, bool newline=false) {
+  cout << pos.x << ", " << pos.y;
+  if(newline) cout << '\n';
+}
+
+void cout_pos_tar(Pos pos, Pos tar) {
+  cout_pos(pos);
+  cout << " | ";
+  cout_pos(tar, true);
+}
+
+void cout_abi(int abi) {
+  if(abi == ABI_NULL) cout << "null" << '\n';
+  else if(abi == ABI_NORMAL) cout << "normal" << '\n';
+  else if(abi == ABI_BOMB) cout << "bomb" << '\n';
+  else if(abi == ABI_KILLSAME) cout << "killsame" << '\n';
+  else if(abi == ABI_CROSS) cout << "cross" << '\n';
+}
 
 void output_my_gameboard() {
   cout << " ";
@@ -47,262 +62,6 @@ void init_typelist() {
   }
 }
 
-bool check_indeque(Pos pos) {
-  if(0 <= pos.x && pos.x < BOARD_HEIGHT-5 
-  && 0 <= pos.y && pos.y < BOARD_WIDTH-5) 
-    return true;
-  return false;
-}
-
-void check_special(Pos, Pos, int&);
-
-void remove_gem(Pos pos) {
-  my_gameboard[pos.x][pos.y].type = GEM_NULL;
-  my_gameboard[pos.x][pos.y].ability = ABI_NULL;
-}
-
-void recover_gem(Pos pos, int type, int ability) {
-  my_gameboard[pos.x][pos.y].ability = type;
-  my_gameboard[pos.x][pos.y].ability = ability;
-}
-
-void remove_gem_special(Pos pos, Pos elim_by, int &elim_cnt) {
-  my_gameboard[pos.x][pos.y].type = GEM_NULL;
-  if(my_gameboard[pos.x][pos.y].ability >= ABI_CROSS) {
-    check_special(pos, elim_by, elim_cnt);
-  }
-  my_gameboard[pos.x][pos.y].ability = ABI_NULL;
-}
-
-
-tarData tar_available[4];
-bool one, two, three;
-Pos tmp_tar;
-int cur_type, tmp_cnt;
-
-void check_cross(Pos &pos, Pos &tar, int &elim_cnt) {
-  cur_type = my_gameboard[pos.x][pos.y].type;
-  for(int i=0; i<4; i++) tar_available[i].available = false;
-  one = true;
-  two = true;
-  three = true;
-  remove_gem(pos);
-  // + 動
-  if(dist_sq(pos, tar) > 0) {
-    for(int i=0; i<4; i++) {
-      if(i == 0) {
-        if(check_inboard({pos.x+1, pos.y})) {
-          for(int j=pos.y-2; j<pos.y; j++) {
-            if(check_inboard({i, j})) {
-              if(cur_type != my_gameboard[pos.x+1][j].type) {
-                one = false;
-              }
-            }
-          }
-          for(int j=pos.y+1; j<pos.y+3; j++) {
-            if(check_inboard({pos.x+1, j})) {
-              if(cur_type != my_gameboard[pos.x+1][j].type) {
-                two = false;
-              }
-            }
-          }
-        }
-        if(check_inboard({pos.x+3, pos.y})) {
-          for(int j=pos.x+2; j<pos.x+4; j++) {
-            if(cur_type != my_gameboard[j][pos.y].type) {
-              three = false;
-            }
-          }
-        }
-      }
-      else if(i == 1){
-        if(check_inboard({pos.x, pos.y+1})) {
-          for(int j=pos.x-2; j<pos.x; j++) {
-            if(check_inboard({j, pos.y+1})) {
-              if(cur_type != my_gameboard[j][pos.y+1].type) {
-                one = false;
-              }
-            }
-          }
-          for(int j=pos.x+1; j<pos.x+3; j++) {
-            if(check_inboard({j, pos.y+1})) {
-              if(cur_type != my_gameboard[j][pos.y+1].type) {
-                two = false;
-              }
-            }
-          }
-        }
-        if(check_inboard({pos.x, pos.y+3})) {
-          for(int j=pos.y+2; j<pos.y+4; j++) {
-            if(cur_type != my_gameboard[pos.x][j].type) {
-              three = false;
-            }
-          }
-        }
-      }
-      else if(i == 2){
-        if(check_inboard({pos.x-1, pos.y})) {
-          for(int j=pos.y-2; j<pos.y; j++) {
-            if(check_inboard({i, j})) {
-              if(cur_type != my_gameboard[pos.x-1][j].type) {
-                one = false;
-              }
-            }
-          }
-          for(int j=pos.y+1; j<pos.y+3; j++) {
-            if(check_inboard({i, j})) {
-              if(cur_type != my_gameboard[pos.x-1][j].type) {
-                two = false;
-              }
-            }
-          }
-        }
-        if(check_inboard({pos.x-3, pos.y})) {
-          for(int j=pos.x-2; j<pos.x-4; j--) {
-            if(cur_type != my_gameboard[j][pos.y].type) {
-              three = false;
-            }
-          }
-        }
-      }
-      else {
-        if(check_inboard({pos.x, pos.y-1})) {
-          for(int j=pos.x-2; j<pos.x; j++) {
-            if(check_inboard({j, pos.y-1})) {
-              if(cur_type != my_gameboard[j][pos.y-1].type) {
-                one = false;
-              }
-            }
-          }
-          for(int j=pos.x+1; j<pos.x+3; j++) {
-            if(check_inboard({j, pos.y-1})) {
-              if(cur_type != my_gameboard[j][pos.y-1].type) {
-                two = false;
-              }
-            }
-          }
-        }
-        if(check_inboard({pos.x, pos.y-3})) {
-          for(int j=pos.y-2; j<pos.y-4; j--) {
-            if(cur_type != my_gameboard[pos.x][j].type) {
-              three = false;
-            }
-          }
-        }
-      }
-      if(one || two || three) {
-        tar_available[i].target = {pos.x+direc[i].x, pos.y+direc[i].y};
-        tar_available[i].available = true;
-        break;
-      }    
-    }
-    // + 動了沒用
-    if(!(tar_available[0].available) 
-    && !(tar_available[1].available)
-    && !(tar_available[2].available)
-    && !(tar_available[3].available)) {
-      // 別人過來
-      for(int i=0; i<4; i++) {
-        tar = {pos.x+direc[i].x, pos.y+direc[i].y};
-        if(cur_type == my_gameboard[tar.x][tar.y].type) {
-          for(int j=0; j<4; j++) {
-            Pos tmp_tar = {tar.x+direc[i].x, tar.y+direc[i].y};
-            if(tmp_tar.x != pos.x || tmp_tar.y != pos.y) {
-              pos = tmp_tar;
-            }
-          }
-        }
-      } 
-    } 
-    // + 可動
-    else {
-      for(int i=0; i<4; i++) {
-        if(tar_available[i].available) {
-          tar = tar_available[i].target;
-        }
-      }
-      for(int i=0; i<BOARD_WIDTH; i++) {
-        if(my_gameboard[tar.x][i].type > GEM_NULL){
-          elim_cnt++;
-          remove_gem_special({tar.x, i}, pos, elim_cnt);
-        } 
-      }
-      for(int i=0; i<BOARD_HEIGHT; i++) {
-        if(my_gameboard[i][tar.y].type > GEM_NULL) {
-          elim_cnt++;
-          remove_gem_special({i, tar.y}, pos, elim_cnt);
-        }
-      }
-    }
-  }
-  // 原地開消
-  else {
-    for(int i=0; i<BOARD_WIDTH; i++) {
-      if(my_gameboard[tar.x][i].type > GEM_NULL){
-        elim_cnt++;
-        remove_gem_special({tar.x, i}, pos, elim_cnt);
-      } 
-    }
-    for(int i=0; i<BOARD_HEIGHT; i++) {
-      if(my_gameboard[i][tar.y].type > GEM_NULL) {
-        elim_cnt++;
-        remove_gem_special({i, tar.y}, pos, elim_cnt);
-      }
-    }
-  }
-  recover_gem(pos, cur_type, ABI_CROSS);
-}
-
-void check_bomb(Pos pos, Pos &tar, int &elim_cnt) {
-  remove_gem(pos);
-  for(int i=0; i<4; i++) {
-    tar = {pos.x+direc[i].x, pos.y+direc[i].y};
-    if(check_inboard(tar)) break;
-  }
-  for(int i=pos.x-2; i<=pos.x+2; i++) {
-    for(int j=pos.y-2; j<=pos.y+2; j++) {
-      if(check_inboard({i, j})) {
-        if(my_gameboard[i][j].type > GEM_NULL) {
-          elim_cnt++;
-          remove_gem_special({i, j}, pos, elim_cnt);
-        }
-      }
-    }
-  }
-  recover_gem(pos, GEM_NULL, ABI_BOMB);
-}
-
-void check_killsame(Pos pos, Pos elim_by, int &elim_cnt) {
-  /*elim by z*/
-  if(my_gameboard[elim_by.x][elim_by.y].ability == ABI_KILLSAME) {
-    elim_cnt = -100;
-    return;
-  }
-
-  /*elim by Q*/
-  else if(my_gameboard[elim_by.x][elim_by.y].ability == ABI_BOMB) {
-    elim_cnt += type_list[gen_rand_type()];
-    return;
-  }
-
-  /*elim by +, normal*/
-  for(int i=0; i<BOARD_HEIGHT; i++) {
-    for(int j=0; j<BOARD_WIDTH; j++) {
-      if(my_gameboard[i][j].type == my_gameboard[elim_by.x][elim_by.y].type) {
-        elim_cnt++;
-        remove_gem_special({i, j}, pos, elim_cnt);
-      }
-    }
-  }
-  return;
-}
-
-void check_special(Pos pos, Pos elim_by, int &elim_cnt) {
-  if(my_gameboard[pos.x][pos.y].ability == ABI_BOMB) check_bomb(pos, elim_by, elim_cnt);
-  else if(my_gameboard[pos.x][pos.y].ability == ABI_KILLSAME) check_killsame(pos, elim_by, elim_cnt);
-  else if(my_gameboard[pos.x][pos.y].ability == ABI_CROSS) check_cross(pos, elim_by, elim_cnt);
-}
-
 bool my_is_line(Pos p) {
   int curr_gem = my_gameboard[p.x][p.y].type;
   bool ret = false;
@@ -328,10 +87,377 @@ bool check_my_eliminate(Pos left_up) {
   return false;
 }
 
+bool check_my_gameboard_eliminate() {
+  for(int i=0; i<BOARD_HEIGHT; i++) {
+    for(int j=0; j<BOARD_WIDTH; j++) {
+      if(my_is_line({i, j}))
+        return true;
+    }
+  }
+  return false;
+}
+
+int my_check_line(Pos p) {
+  int curr_gem = my_gameboard[p.x][p.y].type;
+  int ret = 0;
+  if (curr_gem == GEM_NULL) return ret;
+  if (p.x != 0 && p.x != BOARD_HEIGHT && 
+      curr_gem == my_gameboard[p.x - 1][p.y].type && 
+      curr_gem == my_gameboard[p.x + 1][p.y].type)
+    ret |= 1;
+  if (p.y != 0 && p.y != BOARD_WIDTH && 
+      curr_gem == my_gameboard[p.x][p.y - 1].type && 
+      curr_gem == my_gameboard[p.x][p.y + 1].type)
+    ret |= 2;
+  return ret;
+}
+
+bool check_indeque(Pos pos) {
+  if(0 <= pos.x && pos.x < BOARD_HEIGHT-5 
+  && 0 <= pos.y && pos.y < BOARD_WIDTH-5) 
+    return true;
+  return false;
+}
+
+void backup_gameboard() {
+  for(int i=0; i<BOARD_HEIGHT; i++) {
+    for(int j=0; j<BOARD_WIDTH; j++) {
+      my_gameboard_backup[i][j] = my_gameboard[i][j];
+    }
+  }
+}
+
+void recover_gameboard() {
+  for(int i=0; i<BOARD_HEIGHT; i++) {
+    for(int j=0; j<BOARD_WIDTH; j++) {
+      my_gameboard[i][j] = my_gameboard_backup[i][j];
+    }
+  }
+}
+
+void check_special(Pos, Pos, int&);
+
+void remove_gem(Pos pos) {
+  my_gameboard[pos.x][pos.y].type = GEM_NULL;
+  my_gameboard[pos.x][pos.y].ability = ABI_NULL;
+}
+
+void remove_gem_special(Pos pos, Pos elim_by, int &elim_cnt) {
+  my_gameboard[pos.x][pos.y].type = GEM_NULL;
+  if(my_gameboard[pos.x][pos.y].ability >= ABI_CROSS) {
+    check_special(pos, elim_by, elim_cnt);
+  }
+  my_gameboard[pos.x][pos.y].ability = ABI_NULL;
+  // output_my_gameboard();
+}
+
+void recover_gem_type(Pos pos, int type) {
+  my_gameboard[pos.x][pos.y].type = type;
+}
+
+Pos tmp_tar, tmp_pos;
+int cur_type;
+
+void check_cross(Pos &pos, Pos &tar, int &elim_cnt) {
+  int tmp_abi;
+  // cout_pos_tar(pos, tar);
+  cur_type = my_gameboard[pos.x][pos.y].type;
+  // 原地觸發
+  if((pos.x == tar.x && pos.y == tar.y)
+  || my_gameboard_backup[tar.x][tar.y].ability >= ABI_CROSS) {
+    remove_gem(pos);
+    elim_cnt++;
+    for(int i=0; i<BOARD_WIDTH; i++) {
+      if(my_gameboard[pos.x][i].ability > ABI_NULL){
+        // cout << "cross: " << elim_cnt << '\n';
+        tmp_abi = my_gameboard[pos.x][i].ability;
+        remove_gem_special({pos.x, i}, pos, elim_cnt);
+        if(tmp_abi == ABI_NORMAL)
+          elim_cnt++;
+      } 
+    }
+    for(int i=0; i<BOARD_HEIGHT; i++) {
+      if(my_gameboard[i][pos.y].ability > ABI_NULL) {
+        // cout << "cross: " << elim_cnt << '\n';
+        tmp_abi = my_gameboard[i][pos.y].ability;
+        remove_gem_special({i, pos.y}, pos, elim_cnt);
+        if(tmp_abi == ABI_NORMAL)
+          elim_cnt++;
+      }
+    }
+    // cout << "exit cross\n";
+    return;
+  }
+  // + 動 or 別人過來(中間)
+  else if(cur_type != my_gameboard[tar.x][tar.y].type) {
+    swap(my_gameboard[pos.x][pos.y], my_gameboard[tar.x][tar.y]);
+    
+    Pos tars[4] = {};
+    int i = 0;
+    for(int j=0; j<4; j++) {
+      tmp_tar = {tar.x+direc[j].x, tar.y+direc[j].y};
+      if((pos.x != tmp_tar.x || pos.y != tmp_tar.y)
+      && check_inboard(tmp_tar)) {
+        tars[i++] = tmp_tar;
+      }
+    }
+
+    /*
+    for(int i=0; i<3; i++) {
+      cout_pos(tars[i]);
+      cout << " | ";
+    }
+    cout << '\n';
+    output_my_gameboard();
+    */
+
+    // + 可動
+    if(check_my_gameboard_eliminate()
+    && (my_is_line(tars[0])
+    || my_is_line(tars[1])
+    || my_is_line(tars[2]))) {
+      remove_gem(tar);
+      elim_cnt++;
+      // cout_pos(tar);
+      // cout << " is good\n";
+      for(int i=0; i<BOARD_WIDTH; i++) {
+        if(my_gameboard[tar.x][i].ability > ABI_NULL){
+          tmp_abi = my_gameboard[tar.x][i].ability;
+          remove_gem_special({tar.x, i}, pos, elim_cnt);
+          if(tmp_abi == ABI_NORMAL)
+            elim_cnt++;
+        } 
+      }
+      for(int i=0; i<BOARD_HEIGHT; i++) {
+        if(my_gameboard[i][tar.y].ability > ABI_NULL) {
+          tmp_abi = my_gameboard[i][tar.y].ability;
+          remove_gem_special({i, tar.y}, pos, elim_cnt);
+          if(tmp_abi == ABI_NORMAL)
+            elim_cnt++;
+        }
+      }
+      return;
+    }
+
+    swap(my_gameboard[pos.x][pos.y], my_gameboard[tar.x][tar.y]);
+
+    // 別人過來(中間)
+    if(cur_type == my_gameboard[tar.x*2-pos.x][tar.y*2-pos.y].type) {
+      // output_my_gameboard();
+      int max_cnt;
+      int tmp_cnt_cross[4] = {};
+      if(tar.x == pos.x) {
+        for(int i=0; i<3; i+=2) { // 0 2
+          tmp_pos = {tar.x+direc[i].x, tar.y};
+          if(cur_type == my_gameboard[tmp_pos.x][tmp_pos.y].type) {
+            // cout_pos(tmp_pos);
+            // cout << " is good\n";
+            swap(my_gameboard[tar.x][tar.y], my_gameboard[tmp_pos.x][tmp_pos.y]);
+            // output_my_gameboard();
+            remove_gem(pos);
+            tmp_cnt_cross[i/2]++;
+            for(int j=0; j<BOARD_WIDTH; j++) {
+              if(my_gameboard[pos.x][j].ability > ABI_NULL){
+                // cout << "cross: " << tmp_cnt_cross[i/2] << '\n';
+                tmp_abi = my_gameboard[pos.x][j].ability;
+                remove_gem_special({pos.x, j}, pos, tmp_cnt_cross[i/2]);
+                if(tmp_abi == ABI_NORMAL)
+                  tmp_cnt_cross[i/2]++;
+                
+              } 
+            }
+            for(int j=0; j<BOARD_HEIGHT; j++) {
+              if(my_gameboard[j][pos.y].ability > ABI_NULL) {
+                // cout << "cross: " << tmp_cnt_cross[i/2] << '\n';
+                tmp_abi = my_gameboard[j][pos.y].ability;
+                remove_gem_special({j, pos.y}, pos, tmp_cnt_cross[i/2]);
+                if(tmp_abi == ABI_NORMAL)
+                  tmp_cnt_cross[i/2]++;
+                
+              }
+            }
+            recover_gameboard();
+          }
+        }
+        max_cnt = 0;
+        for(int i=0; i<3; i+=2) {
+          if(tmp_cnt_cross[i/2] > max_cnt) {
+            max_cnt = tmp_cnt_cross[i/2];
+            pos = {tar.x+direc[i].x, tar.y};
+          }
+        }
+      }
+      else {
+        for(int i=1; i<4; i+=2) { // 1 3
+          tmp_pos = {tar.x, tar.y+direc[i].y};
+          if(cur_type == my_gameboard[tmp_pos.x][tmp_pos.y].type) {
+            // cout_pos(tmp_pos);
+            // cout << " is good\n";
+            swap(my_gameboard[tar.x][tar.y], my_gameboard[tmp_pos.x][tmp_pos.y]);
+            tmp_cnt_cross[i/2]++;
+            for(int j=0; j<BOARD_WIDTH; j++) {
+              if(my_gameboard[pos.x][j].ability > ABI_NULL){
+                tmp_abi = my_gameboard[pos.x][j].ability;
+                remove_gem_special({pos.x, j}, pos, tmp_cnt_cross[(i-1)/2]);
+                if(tmp_abi == ABI_NORMAL)
+                  tmp_cnt_cross[(i-1)/2]++;
+              }
+            }
+            for(int j=0; j<BOARD_HEIGHT; j++) {
+              if(my_gameboard[j][pos.y].ability > ABI_NULL) {
+                tmp_abi = my_gameboard[j][pos.y].ability;
+                remove_gem_special({j, pos.y}, pos, tmp_cnt_cross[(i-1)/2]);
+                if(tmp_abi == ABI_NORMAL)
+                  tmp_cnt_cross[(i-1)/2]++;
+              }
+            }
+            recover_gameboard();
+          }
+        }
+        max_cnt = 0;
+        for(int i=1; i<4; i+=2) {
+          if(tmp_cnt_cross[(i-1)/2] > max_cnt) {
+            max_cnt = tmp_cnt_cross[(i-1)/2];
+            pos = {tar.x, tar.y+direc[i].y};
+          }
+        }
+      }
+      if(max_cnt > 0) {
+        elim_cnt = max_cnt;
+        return;
+      }
+      // cout << "set to ";
+      // cout_pos_tar(pos, tar);
+    }
+  }
+  // 別人過來(末端)
+  tmp_pos = {tar.x*2-pos.x, tar.y*2-pos.y};
+  for(int i=0; i<4; i++) {
+    tmp_tar = {tmp_pos.x+direc[i].x, tmp_pos.y+direc[i].y};
+    if(check_inboard(tmp_tar)) {
+      swap(my_gameboard[tmp_pos.x][tmp_pos.y], my_gameboard[tmp_tar.x][tmp_tar.y]);
+      // output_my_gameboard();
+      if(my_is_line(pos) || my_is_line(tar)) {
+        remove_gem(pos);
+        elim_cnt++;
+        for(int i=0; i<BOARD_WIDTH; i++) {
+          if(my_gameboard[pos.x][i].ability > ABI_NULL){
+            tmp_abi = my_gameboard[pos.x][i].ability;
+            remove_gem_special({pos.x, i}, pos, elim_cnt);
+            if(tmp_abi == ABI_NORMAL)
+              elim_cnt++;
+          }
+        }
+        for(int i=0; i<BOARD_HEIGHT; i++) {
+          if(my_gameboard[i][pos.y].ability > ABI_NULL) {
+            tmp_abi = my_gameboard[i][pos.y].ability;
+            remove_gem_special({i, pos.y}, pos, elim_cnt);
+            if(tmp_abi == ABI_NORMAL)
+              elim_cnt++;
+          }
+        }
+        pos = tmp_pos;
+        tar = tmp_tar;
+        return;
+      }
+      swap(my_gameboard[tmp_pos.x][tmp_pos.y], my_gameboard[tmp_tar.x][tmp_tar.y]);
+    }
+  }
+}
+
+void check_bomb(Pos pos, Pos &tar, int &elim_cnt) {
+  int tmp_abi;
+  remove_gem(pos);
+  elim_cnt++;
+  for(int i=0; i<4; i++) {
+    tar = {pos.x+direc[i].x, pos.y+direc[i].y};
+    if(check_inboard(tar)) break;
+  }
+  for(int i=pos.x-2; i<=pos.x+2; i++) {
+    for(int j=pos.y-2; j<=pos.y+2; j++) {
+      if(check_inboard({i, j})) {
+        if(my_gameboard[i][j].ability > ABI_NULL) {
+          // cout << "bomb_cnt: "<< elim_cnt << '\n';
+          tmp_abi = my_gameboard[i][j].ability;
+          remove_gem_special({i, j}, pos, elim_cnt);
+          if(tmp_abi == ABI_NORMAL)
+            elim_cnt++;
+          // else { cout_abi(tmp_abi); }
+        }
+      }
+    }
+  }
+}
+
+void check_killsame(Pos pos, Pos elim_by, int &elim_cnt) {
+  int tmp_abi;
+  remove_gem(pos);
+  elim_cnt++;
+  /*elim by z*/
+  if(my_gameboard[elim_by.x][elim_by.y].ability == ABI_KILLSAME) {
+    elim_cnt = -100;
+    return;
+  }
+
+  /*elim by Q*/
+  else if(my_gameboard[elim_by.x][elim_by.y].ability == ABI_BOMB) {
+    elim_cnt += type_list[gen_rand_type()];
+    return;
+  }
+
+  /*elim by +, normal*/
+  for(int i=0; i<BOARD_HEIGHT; i++) {
+    for(int j=0; j<BOARD_WIDTH; j++) {
+      if(my_gameboard[i][j].type == my_gameboard[elim_by.x][elim_by.y].type) {
+        tmp_abi = my_gameboard[i][j].ability;
+        remove_gem_special({i, j}, pos, elim_cnt);
+        if(tmp_abi == ABI_NORMAL)
+          elim_cnt++;
+      }
+    }
+  }
+  return;
+}
+
+void check_special(Pos pos, Pos elim_by, int &elim_cnt) {
+  if(my_gameboard[pos.x][pos.y].ability == ABI_BOMB) check_bomb(pos, elim_by, elim_cnt);
+  else if(my_gameboard[pos.x][pos.y].ability == ABI_KILLSAME) check_killsame(pos, elim_by, elim_cnt);
+  else if(my_gameboard[pos.x][pos.y].ability == ABI_CROSS) check_cross(pos, elim_by, elim_cnt);
+}
 
 deque<deque<int>> five_times_five_board(5);
 
-int my_check_line(Pos p) {
+void output_deque() {
+  cout << "---------\n";
+  for(auto i: five_times_five_board) {
+    for(auto j: i) {
+        string color = get_color(j);
+        string ansi = "\x1b[" + color + "m";
+        cout << ansi << "x ";
+    }
+    cout << "\x1b[0m";
+    cout << '\n';
+  }
+  cout << "---------\n";
+}
+
+void copy_board_to_deque(int sj, int sk) {
+  int i = 0;
+  for(int j=sj; j<sj+5; j++) {
+    for(int k=sk; k<sk+5; k++) {
+      five_times_five_board[i].push_back(my_gameboard[j][k].type);
+    }
+    i++;
+  }
+}
+
+void clear_deque() {
+  for(int i=0; i<BOARD_HEIGHT-5; i++) {
+    five_times_five_board[i].clear();
+  }
+}
+
+int my_check_line_deque(Pos p) {
   int curr_gem = five_times_five_board[p.x][p.y];
   int ret = 0;
   if (curr_gem == GEM_NULL) return ret;
@@ -350,6 +476,17 @@ bool my_visited[BOARD_HEIGHT-5][BOARD_WIDTH-5];
 bool my_elimi_tags[BOARD_HEIGHT-5][BOARD_WIDTH-5];
 int my_success_line[BOARD_HEIGHT-5][BOARD_WIDTH-5] = {};
 
+void output_elimi_tags() {
+  cout << "---------\n";
+  for(int i=0; i<5; i++) {
+    for(int j=0; j<5; j++) {
+      cout << my_elimi_tags[i][j] << ' ';
+    }
+    cout << '\n';
+  }
+  cout << "---------\n";
+}
+
 void my_special_dfs(Pos pos, ElimiData *data) {
   // cout << "start from: " << pos.x << ", " << pos.y << '\n';
   my_visited[pos.x][pos.y] = 1;
@@ -365,7 +502,6 @@ void my_special_dfs(Pos pos, ElimiData *data) {
   my_success_line[pos.x][pos.y] = 0;
 }
 
-
 int check_gen_special(Pos pos) {
   ElimiData data = {0, 0, 0};
   my_special_dfs(pos, &data);
@@ -379,9 +515,10 @@ int check_gen_special(Pos pos) {
     else
       ret = ABI_BOMB;
   }
-  
   return ret;
 }
+
+
 
 int my_elimi_special() {
   // reset my_visited for my_special_dfs
@@ -395,7 +532,7 @@ int my_elimi_special() {
   // tag the gems should be eliminate
   for (int i = 0; i < BOARD_HEIGHT-5; ++i) {
     for (int j = 0; j < BOARD_WIDTH-5; ++j) {
-      int check_ret = my_check_line({i, j});
+      int check_ret = my_check_line_deque({i, j});
 
       if (!check_ret) {
         continue;
@@ -413,6 +550,8 @@ int my_elimi_special() {
       my_elimi_tags[i][j] = 1;
     }
   }
+  // output_deque();
+  // output_elimi_tags();
   // check if five_times_five_board can gen any special gem
   for (int i = 0; i < BOARD_HEIGHT-5; ++i) {
     for (int j = 0; j < BOARD_WIDTH-5; ++j) {
@@ -425,45 +564,15 @@ int my_elimi_special() {
   return ABI_NULL;
 }
 
-void copy_board_to_deque(int sj, int sk) {
-  int i = 0;
-  for(int j=sj; j<sj+5; j++) {
-    for(int k=sk; k<sk+5; k++) {
-      five_times_five_board[i].push_back(my_gameboard[j][k].type);
-    }
-    i++;
-  }
-}
-
-void output_deque() {
-  cout << '\n';
-  for(auto i: five_times_five_board) {
-    for(auto j: i) {
-        string color = get_color(j);
-        string ansi = "\x1b[" + color + "m";
-        cout << ansi << "x ";
-    }
-    cout << "\x1b[0m";
-    cout << '\n';
-  }
-}
-
 bool check_adjacent(Pos a, Pos b) {
   return dist_sq(a, b) == 1?true:false;
 }
 
 
-bool have_special;
-GemData special[BOARD_HEIGHT*BOARD_WIDTH];
-int indx;
-ElimData eli_data[BOARD_HEIGHT * BOARD_WIDTH];
-GemData current_gem;
-int abi;
-int max_eli, cur_eli;
-Pos cur_pos, cur_tar;
+
 
 void ai(Pos& pos1, Pos& pos2) {
-  cout << "ai" << endl;
+  // cout << "ai" << endl;
   // TODO: Task 4.
   /*
   初步想法: 
@@ -482,9 +591,14 @@ void ai(Pos& pos1, Pos& pos2) {
   */
 
   // You should remove the code below and determine the four values by yourself.
-  indx = 0;
+  // init vars
+  int indx = 0;
   init_typelist();
-  have_special = false;
+  bool have_special = false;
+  GemData special[BOARD_HEIGHT*BOARD_WIDTH] = {};
+  int max_eli;
+  Pos cur_tar;
+
   // sweep over the gameboard and record special(also bool) at the same time
   for(int i=0; i<BOARD_HEIGHT; i++) {
     for(int j=0; j<BOARD_WIDTH; j++) {
@@ -502,63 +616,94 @@ void ai(Pos& pos1, Pos& pos2) {
 
   /* special comes first */
   if(have_special) {
-    cout << "special!" << '\n';
+    // cout << "special! counted: " << indx << '\n';
+    // init vars
+    ElimData eli_data[BOARD_HEIGHT * BOARD_WIDTH] = {};
+    GemData current_gem;
+    int abi, cur_eli;
+    Pos cur_pos;
     // for each special(GemData)
     for(int i=0; i<indx; i++) {
       current_gem = special[i];
       abi = current_gem.gem.ability;
       cur_pos = current_gem.pos;
-
       eli_data[i].pos = current_gem.pos;
+
+      Pos tar, poslst[4], tarlst[4];
+      int tmp_cnt[5] = {};
+      backup_gameboard();
       if(abi == ABI_CROSS) {
-        check_cross(cur_pos, eli_data[i].tar, eli_data[i].cnt);
-      }
-      else if(abi == ABI_BOMB) {
-        check_bomb(cur_pos, eli_data[i].tar, eli_data[i].cnt);
-      }
-      else if(abi == ABI_KILLSAME) {
-        Pos tar;
-        int tmp_cnt[4];
         for(int j=0; j<4; j++) {
-          tar = {cur_pos.x+direc[i].x, cur_pos.y+direc[i].y};
-          if(check_inboard(tar)) 
-            check_killsame(cur_pos, tar, tmp_cnt[i]);
+          tar = {cur_pos.x+direc[j].x, cur_pos.y+direc[j].y};
+          // cout << "tar: ";
+          // cout_pos(tar, true);
+          if(check_inboard(tar)) {
+            check_cross(cur_pos, tar, tmp_cnt[j]);
+            recover_gameboard();
+            poslst[j] = cur_pos;
+            tarlst[j] = tar;
+          }
         }
         int max_cnt = 0;
         for(int j=0; j<4; j++) {
           if(tmp_cnt[j] > max_cnt) {
             max_cnt = tmp_cnt[j];
-            eli_data[i].tar = {cur_pos.x+direc[i].x, cur_pos.y+direc[i].y};
+            eli_data[i].pos = poslst[j];
+            eli_data[i].tar = tarlst[j];
           }
         }
+        eli_data[i].cnt = max_cnt;
       }
-
-      max_eli = 0;
-      pos1 = {BOARD_HEIGHT, BOARD_WIDTH};
-      for(int i=0; i<indx; i++) {
-        if(!check_inboard(eli_data[i].tar)) continue;
-        cur_eli = eli_data[i].cnt;
-        cur_pos = eli_data[i].pos;
-        cur_tar = eli_data[i].tar;
-        if(cur_eli > max_eli) {
-          max_eli = cur_eli;
-          pos1 = cur_pos;
-          pos2 = cur_tar;
+      else if(abi == ABI_BOMB) {
+        check_bomb(cur_pos, eli_data[i].tar, eli_data[i].cnt);
+        recover_gameboard();
+      }
+      else if(abi == ABI_KILLSAME) {
+        for(int j=0; j<4; j++) {
+          tar = {cur_pos.x+direc[j].x, cur_pos.y+direc[j].y};
+          if(check_inboard(tar)) {
+            check_killsame(cur_pos, tar, tmp_cnt[j]);
+            recover_gameboard();
+          }
         }
+        int max_cnt = 0;
+        for(int j=0; j<4; j++) {
+          if(tmp_cnt[j] > max_cnt) {
+            max_cnt = tmp_cnt[j];
+            eli_data[i].tar = {cur_pos.x+direc[j].x, cur_pos.y+direc[j].y};
+          }
+        }
+        eli_data[i].cnt = max_cnt;
+      }
+    }
+    max_eli = 0;
+    pos1 = {BOARD_HEIGHT, BOARD_WIDTH};
+    for(int i=0; i<indx; i++) {
+      if(!check_inboard(eli_data[i].tar)) continue;
+      // cout_pos_tar(eli_data[i].pos, eli_data[i].tar);
+      // cout << eli_data[i].cnt << '\n';
+      cur_eli = eli_data[i].cnt;
+      cur_pos = eli_data[i].pos;
+      cur_tar = eli_data[i].tar;
+      if(cur_eli > max_eli) {
+        max_eli = cur_eli;
+        pos1 = cur_pos;
+        pos2 = cur_tar;
       }
     }
     if(check_inboard(pos1) && check_adjacent(pos1, pos2))
       return;
-    else
-      cout << "\nfrom ai: " << pos1.x << ' ' << pos1.y << '\n' << pos2.x << ' ' << pos2.y << '\n';
+    // else
+      // cout << "\nfrom ai: " << pos1.x << ' ' << pos1.y << '\n' << pos2.x << ' ' << pos2.y << '\n';
   }
     
   /*try to gen special: Q > Z > + */
-  cout << "\nsearching special" << '\n';
-  // init deque, indx, map
+  // cout << "searching special" << '\n';
+  // init vars
   indx = 0;
+  bool duplicate = false;
+  clear_deque();
   copy_board_to_deque(0, 0);
-  // output_deque();
   map<int, int> ability_cnt = {
     {ABI_CROSS, 0},
     {ABI_BOMB, 0},
@@ -583,12 +728,23 @@ void ai(Pos& pos1, Pos& pos2) {
             swap(five_times_five_board[pos.x][pos.y], five_times_five_board[tar.x][tar.y]);
             int special_type = my_elimi_special();
             swap(five_times_five_board[pos.x][pos.y], five_times_five_board[tar.x][tar.y]);
-            // cout << special_type << '\n';
-            if(special_type >= ABI_CROSS) {
+            duplicate = false;
+            for(int i=0; i<indx; i++) {
+              if(special_and_poses[i].abi_type == special_type
+              && special_and_poses[i].pos.x == pos.x+shift_down
+              && special_and_poses[i].pos.y == pos.y+shift_right
+              && special_and_poses[i].tar.x == tar.x+shift_down
+              && special_and_poses[i].tar.y == tar.y+shift_right)
+                duplicate = true;
+            }
+            if(special_type >= ABI_CROSS && !duplicate) {
               special_and_poses[indx].abi_type = special_type;
               special_and_poses[indx].pos = {pos.x+shift_down, pos.y+shift_right};
               special_and_poses[indx].tar = {tar.x+shift_down, tar.y+shift_right};
               ability_cnt[special_type]++;
+              // cout_pos_tar(special_and_poses[indx].pos, special_and_poses[indx].tar);
+              // cout_abi(special_and_poses[indx].abi_type);
+              // cout << ability_cnt[ABI_BOMB] << ' ' << ability_cnt[ABI_KILLSAME] << ' ' << ability_cnt[ABI_CROSS] << '\n';
               if(special_type == ABI_BOMB) {
                 brk = true;
                 if(2 <= shift_down && shift_down <= 3
@@ -617,20 +773,20 @@ void ai(Pos& pos1, Pos& pos2) {
     else {
       // shift down
       shift_right = 0;
-      for(int i=0; i<BOARD_HEIGHT-5; i++) {
-        five_times_five_board[i].clear();
-      }
+      clear_deque();
       shift_down++;
       copy_board_to_deque(shift_down, 0);
     }
     // output_deque();
   }
 
+  // cout << ability_cnt[ABI_BOMB] << ' ' << ability_cnt[ABI_KILLSAME] << ' ' << ability_cnt[ABI_CROSS] << '\n';
   if(indx > 0) {
     // can gen special
-    cout << "gennable\n";
+    // cout << "gennable\n";
     ElimData special_pos;
     if(ability_cnt[ABI_BOMB] > 0) {
+      // cout << "bomb\n";
       for(int i=0; i<indx; i++) {
         special_pos = special_and_poses[i];
         if(special_pos.abi_type == ABI_BOMB) {
@@ -642,6 +798,7 @@ void ai(Pos& pos1, Pos& pos2) {
       }
     }
     else if(ability_cnt[ABI_KILLSAME] > 0) {
+      // cout << "killsame\n";
       for(int i=0; i<indx; i++) {
         special_pos = special_and_poses[i];
         if(special_pos.abi_type == ABI_KILLSAME) {
@@ -652,6 +809,7 @@ void ai(Pos& pos1, Pos& pos2) {
       }
     }
     else {
+      // cout << "cross\n";
       for(int i=0; i<indx; i++) {
         special_pos = special_and_poses[i];
         if(special_pos.abi_type == ABI_CROSS) {
@@ -664,12 +822,12 @@ void ai(Pos& pos1, Pos& pos2) {
 
     if(check_adjacent(pos1, pos2))
       return;
-    else
-      cout << "\nfrom ai: " << pos1.x << ' ' << pos1.y << '\n' << pos2.x << ' ' << pos2.y << '\n';
+    //else
+    //  cout << "\nfrom ai: " << pos1.x << ' ' << pos1.y << '\n' << pos2.x << ' ' << pos2.y << '\n';
   }
 
   /* best one */
-  cout << "\nfind the best one" << '\n';
+  // cout << "\nfind the best one" << '\n';
   ElimData elims[BOARD_HEIGHT*BOARD_WIDTH*2] = {};
   indx = 0;
   for (int i = 0; i < BOARD_HEIGHT; i++) {
@@ -683,23 +841,36 @@ void ai(Pos& pos1, Pos& pos2) {
         if(result) {
           elims[indx].pos = {i, j};
           elims[indx].tar = cur_tar;
-          for (int i = 0; i < BOARD_HEIGHT-5; ++i) {
-            for (int j = 0; j < BOARD_WIDTH-5; ++j) {
+          for (int i = 0; i < BOARD_HEIGHT; ++i) {
+            for (int j = 0; j < BOARD_WIDTH; ++j) {
               int check_ret = my_check_line({i, j});
               if (!check_ret) {
                 continue;
               }
               if (check_ret & 1) {
+                // verti
                 elims[indx].cnt += 2;
               }
               if (check_ret & 2) {
+                // hori
                 elims[indx].cnt += 2;
               }
               elims[indx].cnt++;
             }
           }
+          /*
+          cout << '\n';
+          cout_pos({i, j});
+          cout << " | " << elims[indx].cnt << '\n';
+          output_my_gameboard();
+          */
           indx++;
         }
+        /*
+        else {
+          output_my_gameboard();
+        }
+        */
         swap(my_gameboard[i][j], my_gameboard[cur_tar.x][cur_tar.y]);
       } 
     }
@@ -707,22 +878,26 @@ void ai(Pos& pos1, Pos& pos2) {
 
   max_eli = 0;
   ElimData pos_cnt;
+  /*
   for(int i=0; i<indx; i++) {
-    pos_cnt = elims[indx];
+    cout_pos_tar(elims[i].pos, elims[i].tar);
+    cout << "cnt: " << elims[i].cnt << '\n';
+  }
+  */
+  for(int i=0; i<indx; i++) {
+    pos_cnt = elims[i];
     if(pos_cnt.cnt > max_eli) {
       max_eli = pos_cnt.cnt;
       pos1 = pos_cnt.pos;
       pos2 = pos_cnt.tar;
     }
   }
-  if(check_adjacent(pos1, pos2)) 
+  if(check_adjacent(pos1, pos2)) {
+    // terminate();
     return;
+  }
   else {
-    for(int i=0; i<indx; i++) {
-      cout << elims[i].cnt << ' ';
-    }
     cout << "\nfrom ai: " << pos1.x << ' ' << pos1.y << '\n' << pos2.x << ' ' << pos2.y << '\n';
-    ai(pos1, pos2);
+    terminate();
   }
 }
-

@@ -30,9 +30,9 @@
 #define ABI_CNT 5
 
 #define DRAW_PAUSE_TIME 100
-#define RND_SEED 1
+#define RND_SEED 5
 
-#define STEP_LIMIT 10
+#define STEP_LIMIT 100
 #define SCORE_TARGET 18000
 
 struct Pos {

@@ -3,7 +3,7 @@ S := src
 T := bin
 EXE := $T/main.exe
 OBJ := $S/main.o $S/splendor.o
-FLAG := --std=c++11
+FLAG := --std=c++11 -g -Wall
 MODE := normal
 
 ifeq ($(MODE), ai)

@@ -85,10 +85,10 @@ bool check_swap(Pos a, Pos b) {
   // not adjacent
   if(dist_sq(a, b) > 1) return false;
   // Q, z 不能替換
-  if (gameboard[a.x][a.y].ability == ABI_BOMB &&
-      gameboard[b.x][b.y].ability == ABI_KILLSAME ||
-      gameboard[b.x][b.y].ability == ABI_BOMB &&
-      gameboard[a.x][a.y].ability == ABI_KILLSAME) 
+  if ((gameboard[a.x][a.y].ability == ABI_BOMB &&
+      gameboard[b.x][b.y].ability == ABI_KILLSAME) ||
+      (gameboard[b.x][b.y].ability == ABI_BOMB &&
+      gameboard[a.x][a.y].ability == ABI_KILLSAME)) 
     return false;
   // Q, z 不須連線
   if (gameboard[a.x][a.y].ability == ABI_BOMB ||
@@ -103,47 +103,64 @@ bool check_swap(Pos a, Pos b) {
   return result;
 }
 
-void elim_gem(Pos pos) {
-  gameboard[pos.x][pos.y].type = GEM_NULL;
-  gameboard[pos.x][pos.y].ability = ABI_NULL;
-}
-
-void elim_gem_special(Pos pos) {
-  gameboard[pos.x][pos.y].type = GEM_NULL;
-  if(gameboard[pos.x][pos.y].ability >= ABI_CROSS) apply_special(pos, pos);
-  gameboard[pos.x][pos.y].ability = ABI_NULL;
+void elim_gem_special(Pos pos, Pos tar) {
+  elimi_tags[pos.x][pos.y] = 1;
+  if(gameboard[pos.x][pos.y].ability >= ABI_CROSS) 
+    apply_special(pos, tar);
 }
 
 void apply_bomb(Pos pos) {
   // TODO: Task 2-1
-  elim_gem(pos);
+  cout << "apply bomb" << '\n';
+  elimi_tags[pos.x][pos.y] = 1;
   for(int i=pos.x-2; i<=pos.x+2; i++) {
-    if(i < 0) i = 0;
-    else if(i>=BOARD_HEIGHT) i = BOARD_HEIGHT;
     for(int j=pos.y-2; j<=pos.y+2; j++) {
-      if(j < 0) j = 0;
-      else if(j>=BOARD_WIDTH) j = BOARD_WIDTH;
-      elim_gem_special({i, j});
+      if(check_inboard({i, j}) && !(i==pos.x && j==pos.y))
+        elim_gem_special({i, j}, pos);
     }
   }
+  gameboard[pos.x][pos.y].ability = ABI_BOMB;
 }
 
 void apply_killsame(Pos pos, Pos tar) {
   // TODO: Task 2-2
-  elim_gem(pos);
-  int tartype = gameboard[tar.x][tar.y].type==GEM_NULL?gen_rand_type():gameboard[tar.x][tar.y].type;
+  cout << "apply killsame" << '\n';
+  elimi_tags[pos.x][pos.y] = 1;
+  int tartype;
+  if(gameboard[tar.x][tar.y].ability == ABI_BOMB) {
+    cout << "elim by bomb at " << tar.x << ", " << tar.y << '\n';
+    tartype = gen_rand_type();
+  }
+  else {
+    cout << "elim by " << gameboard[tar.x][tar.y].ability << " at " <<  tar.x << ", " << tar.y << '\n';
+    draw_board(1,0,100);
+    tartype = gameboard[tar.x][tar.y].type;
+  }
+  cout << tartype << '\n';
   for(int i=0; i<BOARD_HEIGHT; i++) {
     for(int j=0; j<BOARD_WIDTH; j++) {
-        if(gameboard[i][j].type == tartype) elim_gem_special({i, j});
+        if(gameboard[i][j].type == tartype && !(i==pos.x && j==pos.y)) 
+          elim_gem_special({i, j}, pos);
     }
   }
+  gameboard[pos.x][pos.y].ability = ABI_KILLSAME;
 }
 
 void apply_cross(Pos pos) {
   // TODO: Task 2-3
-  elim_gem(pos);
-  for(int i=0; i<BOARD_WIDTH; i++) elim_gem_special({pos.x, i});
-  for(int i=0; i<BOARD_HEIGHT; i++) elim_gem_special({i, pos.y});
+  cout << "apply cross" << '\n';
+  elimi_tags[pos.x][pos.y] = 1;
+  for(int i=0; i<BOARD_WIDTH; i++) {
+    if(i != pos.y) {
+      elim_gem_special({pos.x, i}, pos);
+    }
+  }
+  for(int i=0; i<BOARD_HEIGHT; i++) {
+    if(i != pos.x) {
+      elim_gem_special({i, pos.y}, pos);
+    }
+  }
+  gameboard[pos.x][pos.y].ability = ABI_CROSS;
 }
 
 
@@ -179,7 +196,7 @@ void dropping() {
 }
 
 int menu() {
-  // cout << "\033[2J\033[1;1H";
+  cout << "\033[2J\033[1;1H";
   int game_mode = 0;
   cout << "======================================\n\n"
        << " Welcome to Sprout Crush!\n\n"
@@ -378,7 +395,7 @@ void clean_color() {
 }
 
 void draw_board(int mode, int combo, int time = DRAW_PAUSE_TIME) {
-  // cout << "\033[2J\033[1;1H";
+  cout << "\033[2J\033[1;1H";
 
   if (mode == MODE_STEP) {
     cout << "STEP REMAINED: " << step_remained << "\nSCORE: " << player_score << " COMBO: " << combo;
@@ -480,8 +497,9 @@ bool check_str_int(string str) {
 }
 
 
-clock_t start_time, end_time;
-double cur_time, total_time;
+clock_t start_time = 0, end_time= 0;
+double cur_time, total_time, times[20];
+int time_index = 0;
 int main_game(int mode) {
   int running = 1;
   int step = 0;
@@ -493,10 +511,12 @@ int main_game(int mode) {
     start_time = clock();
     ai (a, b);
     end_time = clock();
-    cur_time = (end_time-start_time)/1000.0;
-    cout << "used " << cur_time << " second\n";
+    cur_time = end_time-start_time;
+    // cout << "used " << cur_time << " ms\n";
     total_time += cur_time;
-
+    time_index = time_index>20?20:time_index;
+    times[time_index++] = cur_time;
+    // cout << "ai returned: " << a.x << ' ' << a.y << " | " << b.x << ' ' << b.y << '\n';
     step_remained--;
     step_used++;
     if (check_swap(a, b)) {
@@ -551,6 +571,7 @@ int main_game(int mode) {
       draw_board(mode, combo);
       combo++;
       cout << "Combo!" << endl;
+      // this_thread::sleep_for(chrono::milliseconds(200));
     } while (check_eliminate(nullptr));
 
     // reset moved_tags
@@ -566,9 +587,18 @@ int main_game(int mode) {
     }
     draw_board(mode, 0, 0);
 
+    cout << "step_remained: " << step_remained << '\n';
     if (game_end(mode)) running = 0;
   } while (running);
-  cout << "total_time: " << total_time << " seconds\n";
+  
+  cout << mode << " | " << step_remained << '\n';
+  // timer
+  cout << "total_time: " << total_time << " ms\n";
+  for(int i=0; i<20; i++) {
+    cout << times[i] << ' ';
+  }
+
+  total_time = 0;
   cout << "\nGame over!";
   if (mode == MODE_STEP && player_score > best_score) {
     best_score = player_score;
