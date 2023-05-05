@@ -111,12 +111,16 @@ void elim_gem_special(Pos pos, Pos tar) {
 
 void apply_bomb(Pos pos) {
   // TODO: Task 2-1
-  cout << "apply bomb" << '\n';
   elimi_tags[pos.x][pos.y] = 1;
+  gameboard[pos.x][pos.y].ability = ABI_NORMAL;
   for(int i=pos.x-2; i<=pos.x+2; i++) {
     for(int j=pos.y-2; j<=pos.y+2; j++) {
-      if(check_inboard({i, j}) && !(i==pos.x && j==pos.y))
+      if(check_inboard({i, j})) {
+        if(gameboard[i][j].ability == ABI_KILLSAME) {
+          gameboard[pos.x][pos.y].ability = ABI_BOMB;
+        }
         elim_gem_special({i, j}, pos);
+      }
     }
   }
   gameboard[pos.x][pos.y].ability = ABI_BOMB;
@@ -124,42 +128,36 @@ void apply_bomb(Pos pos) {
 
 void apply_killsame(Pos pos, Pos tar) {
   // TODO: Task 2-2
-  cout << "apply killsame" << '\n';
   elimi_tags[pos.x][pos.y] = 1;
+  gameboard[pos.x][pos.y].ability = ABI_NORMAL;
   int tartype;
   if(gameboard[tar.x][tar.y].ability == ABI_BOMB) {
-    cout << "elim by bomb at " << tar.x << ", " << tar.y << '\n';
+    // cout << "elim by bomb at " << tar.x << ", " << tar.y << '\n';
+    gameboard[tar.x][tar.y].ability = ABI_NORMAL;
     tartype = gen_rand_type();
   }
   else {
-    cout << "elim by " << gameboard[tar.x][tar.y].ability << " at " <<  tar.x << ", " << tar.y << '\n';
-    draw_board(1,0,100);
+    // cout << "elim by " << gameboard[tar.x][tar.y].ability << " at " <<  tar.x << ", " << tar.y << '\n';
     tartype = gameboard[tar.x][tar.y].type;
   }
-  cout << tartype << '\n';
+  // cout << tartype << '\n';
+  // draw_board(1,0,100);
   for(int i=0; i<BOARD_HEIGHT; i++) {
     for(int j=0; j<BOARD_WIDTH; j++) {
-        if(gameboard[i][j].type == tartype && !(i==pos.x && j==pos.y)) 
+        if(gameboard[i][j].type == tartype) 
           elim_gem_special({i, j}, pos);
     }
   }
+  // draw_board(1, 0, 100);
   gameboard[pos.x][pos.y].ability = ABI_KILLSAME;
 }
 
 void apply_cross(Pos pos) {
   // TODO: Task 2-3
-  cout << "apply cross" << '\n';
   elimi_tags[pos.x][pos.y] = 1;
-  for(int i=0; i<BOARD_WIDTH; i++) {
-    if(i != pos.y) {
-      elim_gem_special({pos.x, i}, pos);
-    }
-  }
-  for(int i=0; i<BOARD_HEIGHT; i++) {
-    if(i != pos.x) {
-      elim_gem_special({i, pos.y}, pos);
-    }
-  }
+  gameboard[pos.x][pos.y].ability = ABI_NORMAL;
+  for(int i=0; i<BOARD_WIDTH; i++) elim_gem_special({pos.x, i}, pos);
+  for(int i=0; i<BOARD_HEIGHT; i++) elim_gem_special({i, pos.y}, pos);
   gameboard[pos.x][pos.y].ability = ABI_CROSS;
 }
 
@@ -349,7 +347,7 @@ void eliminate(int mode, int combo) {
     }
   }
 
-  // apply specail ability of cross
+  // apply special ability of cross
   for (int i = 0; i < BOARD_HEIGHT; ++i) {
     for (int j = 0; j < BOARD_WIDTH; ++j) {
       if (elimi_tags[i][j] and gameboard[i][j].ability >= ABI_CROSS) {
@@ -360,6 +358,7 @@ void eliminate(int mode, int combo) {
             tar = curr_test;
           }
         }
+        // cout << "apply " << i << ", " << j << " | tar " << tar.x << ", " << tar.y << '\n';
         apply_special({i, j}, tar);
       }
     }
@@ -516,7 +515,7 @@ int main_game(int mode) {
     total_time += cur_time;
     time_index = time_index>20?20:time_index;
     times[time_index++] = cur_time;
-    // cout << "ai returned: " << a.x << ' ' << a.y << " | " << b.x << ' ' << b.y << '\n';
+    cout << "ai returned: " << a.x << ' ' << a.y << " | " << b.x << ' ' << b.y << '\n';
     step_remained--;
     step_used++;
     if (check_swap(a, b)) {
@@ -587,11 +586,11 @@ int main_game(int mode) {
     }
     draw_board(mode, 0, 0);
 
-    cout << "step_remained: " << step_remained << '\n';
+    // cout << "step_remained: " << step_remained << '\n';
     if (game_end(mode)) running = 0;
   } while (running);
   
-  cout << mode << " | " << step_remained << '\n';
+  // cout << mode << " | " << step_remained << '\n';
   // timer
   cout << "total_time: " << total_time << " ms\n";
   for(int i=0; i<20; i++) {

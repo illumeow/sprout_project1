@@ -162,34 +162,8 @@ void check_cross(Pos &pos, Pos &tar, int &elim_cnt) {
   int tmp_abi;
   // cout_pos_tar(pos, tar);
   cur_type = my_gameboard[pos.x][pos.y].type;
-  // 原地觸發
-  if((pos.x == tar.x && pos.y == tar.y)
-  || my_gameboard_backup[tar.x][tar.y].ability >= ABI_CROSS) {
-    remove_gem(pos);
-    elim_cnt++;
-    for(int i=0; i<BOARD_WIDTH; i++) {
-      if(my_gameboard[pos.x][i].ability > ABI_NULL){
-        // cout << "cross: " << elim_cnt << '\n';
-        tmp_abi = my_gameboard[pos.x][i].ability;
-        remove_gem_special({pos.x, i}, pos, elim_cnt);
-        if(tmp_abi == ABI_NORMAL)
-          elim_cnt++;
-      } 
-    }
-    for(int i=0; i<BOARD_HEIGHT; i++) {
-      if(my_gameboard[i][pos.y].ability > ABI_NULL) {
-        // cout << "cross: " << elim_cnt << '\n';
-        tmp_abi = my_gameboard[i][pos.y].ability;
-        remove_gem_special({i, pos.y}, pos, elim_cnt);
-        if(tmp_abi == ABI_NORMAL)
-          elim_cnt++;
-      }
-    }
-    // cout << "exit cross\n";
-    return;
-  }
   // + 動 or 別人過來(中間)
-  else if(cur_type != my_gameboard[tar.x][tar.y].type) {
+  if(cur_type != my_gameboard[tar.x][tar.y].type) {
     swap(my_gameboard[pos.x][pos.y], my_gameboard[tar.x][tar.y]);
     
     Pos tars[4] = {};
@@ -218,8 +192,6 @@ void check_cross(Pos &pos, Pos &tar, int &elim_cnt) {
     || my_is_line(tars[2]))) {
       remove_gem(tar);
       elim_cnt++;
-      // cout_pos(tar);
-      // cout << " is good\n";
       for(int i=0; i<BOARD_WIDTH; i++) {
         if(my_gameboard[tar.x][i].ability > ABI_NULL){
           tmp_abi = my_gameboard[tar.x][i].ability;
@@ -242,92 +214,93 @@ void check_cross(Pos &pos, Pos &tar, int &elim_cnt) {
     swap(my_gameboard[pos.x][pos.y], my_gameboard[tar.x][tar.y]);
 
     // 別人過來(中間)
-    if(cur_type == my_gameboard[tar.x*2-pos.x][tar.y*2-pos.y].type) {
-      // output_my_gameboard();
-      int max_cnt;
-      int tmp_cnt_cross[4] = {};
-      if(tar.x == pos.x) {
-        for(int i=0; i<3; i+=2) { // 0 2
-          tmp_pos = {tar.x+direc[i].x, tar.y};
-          if(cur_type == my_gameboard[tmp_pos.x][tmp_pos.y].type) {
-            // cout_pos(tmp_pos);
-            // cout << " is good\n";
-            swap(my_gameboard[tar.x][tar.y], my_gameboard[tmp_pos.x][tmp_pos.y]);
-            // output_my_gameboard();
-            remove_gem(pos);
-            tmp_cnt_cross[i/2]++;
-            for(int j=0; j<BOARD_WIDTH; j++) {
-              if(my_gameboard[pos.x][j].ability > ABI_NULL){
-                // cout << "cross: " << tmp_cnt_cross[i/2] << '\n';
-                tmp_abi = my_gameboard[pos.x][j].ability;
-                remove_gem_special({pos.x, j}, pos, tmp_cnt_cross[i/2]);
-                if(tmp_abi == ABI_NORMAL)
-                  tmp_cnt_cross[i/2]++;
-                
-              } 
-            }
-            for(int j=0; j<BOARD_HEIGHT; j++) {
-              if(my_gameboard[j][pos.y].ability > ABI_NULL) {
-                // cout << "cross: " << tmp_cnt_cross[i/2] << '\n';
-                tmp_abi = my_gameboard[j][pos.y].ability;
-                remove_gem_special({j, pos.y}, pos, tmp_cnt_cross[i/2]);
-                if(tmp_abi == ABI_NORMAL)
-                  tmp_cnt_cross[i/2]++;
-                
+    if(check_inboard({tar.x*2-pos.x, tar.y*2-pos.y})) {
+      if(cur_type == my_gameboard[tar.x*2-pos.x][tar.y*2-pos.y].type) {
+        // output_my_gameboard();
+        int max_cnt;
+        int tmp_cnt_cross[4] = {};
+        if(tar.x == pos.x) {
+          for(int i=0; i<3; i+=2) { // 0 2
+            tmp_pos = {tar.x+direc[i].x, tar.y};
+            if(cur_type == my_gameboard[tmp_pos.x][tmp_pos.y].type) {
+            
+              swap(my_gameboard[tar.x][tar.y], my_gameboard[tmp_pos.x][tmp_pos.y]);
+              // output_my_gameboard();
+              remove_gem(pos);
+              tmp_cnt_cross[i/2]++;
+              for(int j=0; j<BOARD_WIDTH; j++) {
+                if(my_gameboard[pos.x][j].ability > ABI_NULL){
+                  // cout << "cross: " << tmp_cnt_cross[i/2] << '\n';
+                  tmp_abi = my_gameboard[pos.x][j].ability;
+                  remove_gem_special({pos.x, j}, pos, tmp_cnt_cross[i/2]);
+                  if(tmp_abi == ABI_NORMAL)
+                    tmp_cnt_cross[i/2]++;
+                } 
               }
-            }
-            recover_gameboard();
-          }
-        }
-        max_cnt = 0;
-        for(int i=0; i<3; i+=2) {
-          if(tmp_cnt_cross[i/2] > max_cnt) {
-            max_cnt = tmp_cnt_cross[i/2];
-            pos = {tar.x+direc[i].x, tar.y};
-          }
-        }
-      }
-      else {
-        for(int i=1; i<4; i+=2) { // 1 3
-          tmp_pos = {tar.x, tar.y+direc[i].y};
-          if(cur_type == my_gameboard[tmp_pos.x][tmp_pos.y].type) {
-            // cout_pos(tmp_pos);
-            // cout << " is good\n";
-            swap(my_gameboard[tar.x][tar.y], my_gameboard[tmp_pos.x][tmp_pos.y]);
-            tmp_cnt_cross[i/2]++;
-            for(int j=0; j<BOARD_WIDTH; j++) {
-              if(my_gameboard[pos.x][j].ability > ABI_NULL){
-                tmp_abi = my_gameboard[pos.x][j].ability;
-                remove_gem_special({pos.x, j}, pos, tmp_cnt_cross[(i-1)/2]);
-                if(tmp_abi == ABI_NORMAL)
-                  tmp_cnt_cross[(i-1)/2]++;
+              for(int j=0; j<BOARD_HEIGHT; j++) {
+                if(my_gameboard[j][pos.y].ability > ABI_NULL) {
+                  // cout << "cross: " << tmp_cnt_cross[i/2] << '\n';
+                  tmp_abi = my_gameboard[j][pos.y].ability;
+                  remove_gem_special({j, pos.y}, pos, tmp_cnt_cross[i/2]);
+                  if(tmp_abi == ABI_NORMAL)
+                    tmp_cnt_cross[i/2]++;
+                }
               }
+              recover_gameboard();
             }
-            for(int j=0; j<BOARD_HEIGHT; j++) {
-              if(my_gameboard[j][pos.y].ability > ABI_NULL) {
-                tmp_abi = my_gameboard[j][pos.y].ability;
-                remove_gem_special({j, pos.y}, pos, tmp_cnt_cross[(i-1)/2]);
-                if(tmp_abi == ABI_NORMAL)
-                  tmp_cnt_cross[(i-1)/2]++;
+          }
+          max_cnt = 0;
+          for(int i=0; i<3; i+=2) {
+            if(tmp_cnt_cross[i/2] > max_cnt) {
+              max_cnt = tmp_cnt_cross[i/2];
+              // cout << "change1\n";
+              pos = {tar.x+direc[i].x, tar.y};
+            }
+          }
+        }
+        else {
+          for(int i=1; i<4; i+=2) { // 1 3
+            tmp_pos = {tar.x, tar.y+direc[i].y};
+            if(cur_type == my_gameboard[tmp_pos.x][tmp_pos.y].type) {
+              // cout_pos(tmp_pos);
+              // cout << " is good\n";
+              swap(my_gameboard[tar.x][tar.y], my_gameboard[tmp_pos.x][tmp_pos.y]);
+              tmp_cnt_cross[i/2]++;
+              for(int j=0; j<BOARD_WIDTH; j++) {
+                if(my_gameboard[pos.x][j].ability > ABI_NULL){
+                  tmp_abi = my_gameboard[pos.x][j].ability;
+                  remove_gem_special({pos.x, j}, pos, tmp_cnt_cross[(i-1)/2]);
+                  if(tmp_abi == ABI_NORMAL)
+                    tmp_cnt_cross[(i-1)/2]++;
+                }
               }
+              for(int j=0; j<BOARD_HEIGHT; j++) {
+                if(my_gameboard[j][pos.y].ability > ABI_NULL) {
+                  tmp_abi = my_gameboard[j][pos.y].ability;
+                  remove_gem_special({j, pos.y}, pos, tmp_cnt_cross[(i-1)/2]);
+                  if(tmp_abi == ABI_NORMAL)
+                    tmp_cnt_cross[(i-1)/2]++;
+                }
+              }
+              recover_gameboard();
             }
-            recover_gameboard();
+          }
+          max_cnt = 0;
+          for(int i=1; i<4; i+=2) {
+            if(tmp_cnt_cross[(i-1)/2] > max_cnt) {
+              max_cnt = tmp_cnt_cross[(i-1)/2];
+              // cout << "change3\n";
+              pos = {tar.x, tar.y+direc[i].y};
+            }
           }
         }
-        max_cnt = 0;
-        for(int i=1; i<4; i+=2) {
-          if(tmp_cnt_cross[(i-1)/2] > max_cnt) {
-            max_cnt = tmp_cnt_cross[(i-1)/2];
-            pos = {tar.x, tar.y+direc[i].y};
-          }
+        if(max_cnt > 0) {
+          elim_cnt = max_cnt;
+          return;
         }
+        // cout << "set to ";
+        // cout_pos_tar(pos, tar);
       }
-      if(max_cnt > 0) {
-        elim_cnt = max_cnt;
-        return;
-      }
-      // cout << "set to ";
-      // cout_pos_tar(pos, tar);
     }
   }
   // 別人過來(末端)
@@ -356,6 +329,7 @@ void check_cross(Pos &pos, Pos &tar, int &elim_cnt) {
               elim_cnt++;
           }
         }
+        // cout << "change2\n";
         pos = tmp_pos;
         tar = tmp_tar;
         return;
@@ -365,6 +339,29 @@ void check_cross(Pos &pos, Pos &tar, int &elim_cnt) {
   }
 }
 
+void check_cross_call(Pos pos, int &elim_cnt) {
+  int tmp_abi;
+  remove_gem(pos);
+  elim_cnt++;
+  for(int i=0; i<BOARD_WIDTH; i++) {
+    if(my_gameboard[pos.x][i].ability > ABI_NULL){
+      // cout << "cross: " << elim_cnt << '\n';
+      tmp_abi = my_gameboard[pos.x][i].ability;
+      remove_gem_special({pos.x, i}, pos, elim_cnt);
+      if(tmp_abi == ABI_NORMAL)
+        elim_cnt++;
+    } 
+  }
+  for(int i=0; i<BOARD_HEIGHT; i++) {
+    if(my_gameboard[i][pos.y].ability > ABI_NULL) {
+      // cout << "cross: " << elim_cnt << '\n';
+      tmp_abi = my_gameboard[i][pos.y].ability;
+      remove_gem_special({i, pos.y}, pos, elim_cnt);
+      if(tmp_abi == ABI_NORMAL)
+        elim_cnt++;
+    }
+  }
+}
 void check_bomb(Pos pos, Pos &tar, int &elim_cnt) {
   int tmp_abi;
   remove_gem(pos);
@@ -422,7 +419,7 @@ void check_killsame(Pos pos, Pos elim_by, int &elim_cnt) {
 void check_special(Pos pos, Pos elim_by, int &elim_cnt) {
   if(my_gameboard[pos.x][pos.y].ability == ABI_BOMB) check_bomb(pos, elim_by, elim_cnt);
   else if(my_gameboard[pos.x][pos.y].ability == ABI_KILLSAME) check_killsame(pos, elim_by, elim_cnt);
-  else if(my_gameboard[pos.x][pos.y].ability == ABI_CROSS) check_cross(pos, elim_by, elim_cnt);
+  else if(my_gameboard[pos.x][pos.y].ability == ABI_CROSS) check_cross_call(pos, elim_cnt);
 }
 
 deque<deque<int>> five_times_five_board(5);
@@ -621,23 +618,28 @@ void ai(Pos& pos1, Pos& pos2) {
     ElimData eli_data[BOARD_HEIGHT * BOARD_WIDTH] = {};
     GemData current_gem;
     int abi, cur_eli;
-    Pos cur_pos;
+    Pos cur_pos, temp_pos;
     // for each special(GemData)
     for(int i=0; i<indx; i++) {
       current_gem = special[i];
       abi = current_gem.gem.ability;
       cur_pos = current_gem.pos;
       eli_data[i].pos = current_gem.pos;
-
+      // cout << i << " got pos ";
+      // cout_pos(cur_pos, true);
       Pos tar, poslst[4], tarlst[4];
       int tmp_cnt[5] = {};
       backup_gameboard();
       if(abi == ABI_CROSS) {
+        temp_pos = cur_pos;
         for(int j=0; j<4; j++) {
+          cur_pos = temp_pos;
           tar = {cur_pos.x+direc[j].x, cur_pos.y+direc[j].y};
           // cout << "tar: ";
           // cout_pos(tar, true);
           if(check_inboard(tar)) {
+            // cout << "check :";
+            // cout_pos_tar(cur_pos, tar);
             check_cross(cur_pos, tar, tmp_cnt[j]);
             recover_gameboard();
             poslst[j] = cur_pos;
@@ -650,6 +652,8 @@ void ai(Pos& pos1, Pos& pos2) {
             max_cnt = tmp_cnt[j];
             eli_data[i].pos = poslst[j];
             eli_data[i].tar = tarlst[j];
+            // cout_pos_tar(eli_data[i].pos, eli_data[i].tar);
+            // cout << tmp_cnt[j] << '\n';
           }
         }
         eli_data[i].cnt = max_cnt;
@@ -698,7 +702,7 @@ void ai(Pos& pos1, Pos& pos2) {
   }
     
   /*try to gen special: Q > Z > + */
-  // cout << "searching special" << '\n';
+  cout << "searching special" << '\n';
   // init vars
   indx = 0;
   bool duplicate = false;
@@ -827,7 +831,7 @@ void ai(Pos& pos1, Pos& pos2) {
   }
 
   /* best one */
-  // cout << "\nfind the best one" << '\n';
+  cout << "\nfind the best one" << '\n';
   ElimData elims[BOARD_HEIGHT*BOARD_WIDTH*2] = {};
   indx = 0;
   for (int i = 0; i < BOARD_HEIGHT; i++) {
