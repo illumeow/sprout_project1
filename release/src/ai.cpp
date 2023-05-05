@@ -931,4 +931,15 @@ void ai(Pos& pos1, Pos& pos2) {
     // terminate();
     return;
   }
+  else {
+    while(true) {
+      pos1.x = gen_rand() % BOARD_HEIGHT;
+      pos1.y = gen_rand() % BOARD_WIDTH;
+      pos2.x = gen_rand() % BOARD_HEIGHT;
+      pos2.y = gen_rand() % BOARD_WIDTH;
+      swap(my_gameboard[pos1.x][pos1.y], my_gameboard[pos2.x][pos2.y]);
+      if(check_eliminate) break;
+      swap(my_gameboard[pos1.x][pos1.y], my_gameboard[pos2.x][pos2.y]);
+    }
+  }
 }

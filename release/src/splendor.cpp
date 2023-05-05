@@ -136,6 +136,10 @@ void apply_killsame(Pos pos, Pos tar) {
     gameboard[tar.x][tar.y].ability = ABI_NORMAL;
     tartype = gen_rand_type();
   }
+  else if(gameboard[tar.x][tar.y].ability == ABI_KILLSAME) {
+    elimi_tags[pos.x][pos.y] = 1;
+    elimi_tags[tar.x][tar.y] = 1;
+  }
   else {
     // cout << "elim by " << gameboard[tar.x][tar.y].ability << " at " <<  tar.x << ", " << tar.y << '\n';
     tartype = gameboard[tar.x][tar.y].type;
@@ -605,6 +609,12 @@ void game_init(int mode) {
   } while(check_dead());
   init_global_variable();
   init_gameboard();
+  gameboard[4][5].type = GEM_NULL;
+  gameboard[5][5].type = GEM_NULL;
+  gameboard[4][5].ability = ABI_KILLSAME;
+  gameboard[5][5].ability = ABI_KILLSAME;
+  gameboard[6][6].type = GEM_NULL;
+  gameboard[6][6].ability = ABI_BOMB;
   draw_board(mode, 0);
   return;
 }
