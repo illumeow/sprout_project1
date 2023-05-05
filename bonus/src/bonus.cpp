@@ -1,4 +1,3 @@
-#include "splendor.hpp"
 // bonus task
 
 // add z, z swap. elim all using 2 steps
@@ -40,7 +39,7 @@ void apply_killsame(Pos pos, Pos tar) {
 
 /*
 add #define ABI_PLANE 5 and change #define ABI_CNT 5->6
-also modify get_style(), apply_special(), eliminate(), check_swap()
+also modify get_style(), apply_special(), eliminate(), check_swap(), is_line()[used in check_eliminate()]
 */
 // modify func
 char get_style(int ability) {
@@ -68,6 +67,34 @@ for (int i = 0; i < BOARD_HEIGHT; ++i) {
 
 // add these in check_swap in the fourth if
 gameboard[a.x][a.y].ability == ABI_PLANE || gameboard[b.x][b.y].ability == ABI_PLANE
+
+// modify is_line()
+bool is_line(Pos p) {
+  int curr_gem = gameboard[p.x][p.y].type;
+  bool ret = false;
+  if (curr_gem == GEM_NULL) return ret;
+  if (p.x != 0 && p.x != BOARD_HEIGHT-1 && 
+      curr_gem == gameboard[p.x-1][p.y].type && 
+      curr_gem == gameboard[p.x+1][p.y].type)
+    ret = true;
+  if (p.y != 0 && p.y != BOARD_WIDTH-1 && 
+      curr_gem == gameboard[p.x][p.y-1].type && 
+      curr_gem == gameboard[p.x][p.y+1].type)
+    ret = true;
+  // plane 
+  if (p.x != BOARD_HEIGHT-1 && p.y != BOARD_WIDTH-1) {
+    bool plane = true;
+    for(int i=p.x; i<p.x+2; i++) {
+      for(int j=p.y; j<p.y+2; j++) {
+        if(curr_gem != gameboard[i][j].type) {
+          plane = false;
+        }
+      }
+    }
+    if(plane) ret = true;
+  }
+  return ret;
+}
 
 // new funcs
 // search for a plane

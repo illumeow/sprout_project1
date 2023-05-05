@@ -248,6 +248,129 @@ void gen_board() {
   return;
 }
 
+/*
+void set_type(int i, int j, int type) {
+  gameboard[i][j].type = type;
+}
+
+void gen_customboard() {
+  for (int i = 0; i < BOARD_HEIGHT; ++i) {
+    for (int j = 0; j < BOARD_WIDTH; ++j) {
+      gameboard[i][j].ability = ABI_NORMAL;
+    }
+  }
+  set_type(0, 0, GEM_RUBY);
+  set_type(0, 4, GEM_RUBY);
+  set_type(1, 2, GEM_RUBY);
+  set_type(1, 6, GEM_RUBY);
+  set_type(2, 1, GEM_RUBY);
+  set_type(2, 8, GEM_RUBY);
+  set_type(2, 9, GEM_RUBY);
+  set_type(3, 1, GEM_RUBY);
+  set_type(5, 7, GEM_RUBY);
+  set_type(6, 2, GEM_RUBY);
+  set_type(6, 1, GEM_RUBY);
+  set_type(7, 5, GEM_RUBY);
+  set_type(8, 1, GEM_RUBY);
+  set_type(8, 3, GEM_RUBY);
+  set_type(9, 4, GEM_RUBY);
+  set_type(0, 0, GEM_RUBY);
+
+  set_type(0, 1, GEM_EMERALD);
+  set_type(0, 5, GEM_EMERALD);
+  set_type(0, 9, GEM_EMERALD);
+  set_type(1, 3, GEM_EMERALD);
+  set_type(1, 7, GEM_EMERALD);
+  set_type(3, 0, GEM_EMERALD);
+  set_type(3, 4, GEM_EMERALD);
+  set_type(3, 9, GEM_EMERALD);
+  set_type(4, 3, GEM_EMERALD);
+  set_type(5, 1, GEM_EMERALD);
+  set_type(5, 8, GEM_EMERALD);
+  set_type(6, 6, GEM_EMERALD);
+  set_type(7, 1, GEM_EMERALD);
+  set_type(7, 7, GEM_EMERALD);
+  set_type(9, 0, GEM_EMERALD);
+  set_type(9, 2, GEM_EMERALD);
+  set_type(9, 6, GEM_EMERALD);
+  set_type(9, 9, GEM_EMERALD);
+
+  set_type(0, 2, GEM_AMBER);
+  set_type(0, 6, GEM_AMBER);
+  set_type(1, 1, GEM_AMBER);
+  set_type(1, 4, GEM_AMBER);
+  set_type(1, 9, GEM_AMBER);
+  set_type(2, 4, GEM_AMBER);
+  set_type(2, 5, GEM_AMBER);
+  set_type(2, 7, GEM_AMBER);
+  set_type(3, 2, GEM_AMBER);
+  set_type(3, 7, GEM_AMBER);
+  set_type(3, 8, GEM_AMBER);
+  set_type(4, 1, GEM_AMBER);
+  set_type(4, 4, GEM_AMBER);
+  set_type(4, 6, GEM_AMBER);
+  set_type(5, 0, GEM_AMBER);
+  set_type(6, 3, GEM_AMBER);
+  set_type(6, 4, GEM_AMBER);
+  set_type(6, 8, GEM_AMBER);
+  set_type(6, 9, GEM_AMBER);
+  set_type(7, 4, GEM_AMBER);
+  set_type(8, 7, GEM_AMBER);
+  set_type(9, 5, GEM_AMBER);
+  set_type(9, 7, GEM_AMBER);
+
+  set_type(0, 3, GEM_LAPIZ);
+  set_type(0, 7, GEM_LAPIZ);
+  set_type(0, 8, GEM_LAPIZ);
+  set_type(1, 0, GEM_LAPIZ);
+  set_type(1, 8, GEM_LAPIZ);
+  set_type(2, 6, GEM_LAPIZ);
+  set_type(3, 5, GEM_LAPIZ);
+  set_type(3, 6, GEM_LAPIZ);
+  set_type(4, 0, GEM_LAPIZ);
+  set_type(4, 2, GEM_LAPIZ);
+  set_type(4, 8, GEM_LAPIZ);
+  set_type(5, 2, GEM_LAPIZ);
+  set_type(5, 5, GEM_LAPIZ);
+  set_type(5, 6, GEM_LAPIZ);
+  set_type(5, 9, GEM_LAPIZ);
+  set_type(7, 0, GEM_LAPIZ);
+  set_type(7, 2, GEM_LAPIZ);
+  set_type(7, 6, GEM_LAPIZ);
+  set_type(7, 8, GEM_LAPIZ);
+  set_type(8, 0, GEM_LAPIZ);
+  set_type(8, 2, GEM_LAPIZ);
+  set_type(8, 4, GEM_LAPIZ);
+  set_type(8, 9, GEM_LAPIZ);
+  set_type(9, 1, GEM_LAPIZ);
+
+  set_type(1, 5, GEM_AMETHYST);
+  set_type(2, 0, GEM_AMETHYST);
+  set_type(2, 2, GEM_AMETHYST);
+  set_type(2, 3, GEM_AMETHYST);
+  set_type(3, 3, GEM_AMETHYST);
+  set_type(4, 5, GEM_AMETHYST);
+  set_type(4, 7, GEM_AMETHYST);
+  set_type(4, 9, GEM_AMETHYST);
+  set_type(5, 3, GEM_AMETHYST);
+  set_type(5, 4, GEM_AMETHYST);
+  set_type(6, 0, GEM_AMETHYST);
+  set_type(6, 5, GEM_AMETHYST);
+  set_type(6, 7, GEM_AMETHYST);
+  set_type(7, 3, GEM_AMETHYST);
+  set_type(7, 9, GEM_AMETHYST);
+  set_type(8, 5, GEM_AMETHYST);
+  set_type(8, 6, GEM_AMETHYST);
+  set_type(8, 8, GEM_AMETHYST);
+  set_type(9, 3, GEM_AMETHYST);
+  set_type(9, 8, GEM_AMETHYST);
+
+  gameboard[3][2].ability = ABI_CROSS;
+  gameboard[6][9].ability = ABI_CROSS;
+  gameboard[8][6].ability = ABI_CROSS;
+}
+*/
+
 int dist_sq(Pos a, Pos b) {
   return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
 }
@@ -515,7 +638,7 @@ int main_game(int mode) {
     total_time += cur_time;
     time_index = time_index>20?20:time_index;
     times[time_index++] = cur_time;
-    cout << "ai returned: " << a.x << ' ' << a.y << " | " << b.x << ' ' << b.y << '\n';
+    // cout << "ai returned: " << a.x << ' ' << a.y << " | " << b.x << ' ' << b.y << '\n';
     step_remained--;
     step_used++;
     if (check_swap(a, b)) {
@@ -592,10 +715,12 @@ int main_game(int mode) {
   
   // cout << mode << " | " << step_remained << '\n';
   // timer
+  /*
   cout << "total_time: " << total_time << " ms\n";
   for(int i=0; i<20; i++) {
     cout << times[i] << ' ';
   }
+  */
 
   total_time = 0;
   cout << "\nGame over!";

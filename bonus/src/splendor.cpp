@@ -59,6 +59,18 @@ bool is_line(Pos p) {
       curr_gem == gameboard[p.x][p.y-1].type && 
       curr_gem == gameboard[p.x][p.y+1].type)
     ret = true;
+  // plane 
+  if (p.x != BOARD_HEIGHT-1 && p.y != BOARD_WIDTH-1) {
+    bool plane = true;
+    for(int i=p.x; i<p.x+2; i++) {
+      for(int j=p.y; j<p.y+2; j++) {
+        if(curr_gem != gameboard[i][j].type) {
+          plane = false;
+        }
+      }
+    }
+    if(plane) ret = true;
+  }
   return ret;
 }
 
@@ -129,31 +141,36 @@ void apply_bomb(Pos pos) {
 }
 
 void apply_killsame(Pos pos, Pos tar) {
-  // TODO: Task 2-2
   elimi_tags[pos.x][pos.y] = 1;
   gameboard[pos.x][pos.y].ability = ABI_NORMAL;
+
   int tartype;
   if(gameboard[tar.x][tar.y].ability == ABI_BOMB) {
-    cout << "elim by bomb at " << tar.x << ", " << tar.y << '\n';
     gameboard[tar.x][tar.y].ability = ABI_NORMAL;
     tartype = gen_rand_type();
   }
+  else if(gameboard[tar.x][tar.y].ability == ABI_KILLSAME) {
+    // elim all
+    for(int i=0; i<BOARD_HEIGHT; i++) {
+        for(int j=0; j<BOARD_WIDTH; j++) {
+            elim_gem_special({i, j}, pos);
+        }
+    }
+    gameboard[pos.x][pos.y].ability = ABI_KILLSAME;  
+    return;
+  }
   else {
-    cout << "elim by " << gameboard[tar.x][tar.y].ability << " at " <<  tar.x << ", " << tar.y << '\n';
     tartype = gameboard[tar.x][tar.y].type;
   }
-  cout << tartype << '\n';
-  draw_board(1,0,100);
+
   for(int i=0; i<BOARD_HEIGHT; i++) {
     for(int j=0; j<BOARD_WIDTH; j++) {
         if(gameboard[i][j].type == tartype) 
           elim_gem_special({i, j}, pos);
     }
   }
-  draw_board(1, 0, 100);
   gameboard[pos.x][pos.y].ability = ABI_KILLSAME;
 }
-
 void apply_cross(Pos pos) {
   // TODO: Task 2-3
   elimi_tags[pos.x][pos.y] = 1;
@@ -403,7 +420,7 @@ void eliminate(int mode, int combo) {
             tar = curr_test;
           }
         }
-        cout << "apply " << i << ", " << j << " | tar " << tar.x << ", " << tar.y << '\n';
+        // cout << "apply " << i << ", " << j << " | tar " << tar.x << ", " << tar.y << '\n';
         apply_special({i, j}, tar);
       }
     }
@@ -560,7 +577,6 @@ int main_game(int mode) {
     total_time += cur_time;
     time_index = time_index>20?20:time_index;
     times[time_index++] = cur_time;
-    cout << "ai returned: " << a.x << ' ' << a.y << " | " << b.x << ' ' << b.y << '\n';
     step_remained--;
     step_used++;
     if (check_swap(a, b)) {
@@ -603,6 +619,9 @@ int main_game(int mode) {
       /* Chi-chun edit: Remind the user that invalid operations are taken */
       draw_board(mode, 0, 0);
       cout << "invalid operation!\n";
+      swap(gameboard[a.x][a.y], gameboard[b.x][b.y]);
+      draw_board(1, 0, 100);
+      swap(gameboard[a.x][a.y], gameboard[b.x][b.y]);
       continue;
     };
 #endif
@@ -635,12 +654,6 @@ int main_game(int mode) {
     if (game_end(mode)) running = 0;
   } while (running);
   
-  cout << mode << " | " << step_remained << '\n';
-  // timer
-  cout << "total_time: " << total_time << " ms\n";
-  for(int i=0; i<20; i++) {
-    cout << times[i] << ' ';
-  }
 
   total_time = 0;
   cout << "\nGame over!";

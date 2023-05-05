@@ -77,9 +77,9 @@ bool my_is_line(Pos p) {
   return ret;
 }
 
-bool check_my_eliminate(Pos left_up) {
-  for(int i=left_up.x; i<left_up.x+5; i++) {
-    for(int j=left_up.y; j<left_up.y+5; j++) {
+bool check_my_eliminate() {
+  for(int i=0; i<BOARD_HEIGHT; i++) {
+    for(int j=0; j<BOARD_WIDTH; j++) {
       if(my_is_line({i, j}))
         return true;
     }
@@ -162,7 +162,7 @@ void check_cross(Pos &pos, Pos &tar, int &elim_cnt) {
   int tmp_abi;
   // cout_pos_tar(pos, tar);
   cur_type = my_gameboard[pos.x][pos.y].type;
-  // + 動 or 別人過來(中間)
+  
   if(cur_type != my_gameboard[tar.x][tar.y].type) {
     swap(my_gameboard[pos.x][pos.y], my_gameboard[tar.x][tar.y]);
     
@@ -302,15 +302,47 @@ void check_cross(Pos &pos, Pos &tar, int &elim_cnt) {
         // cout_pos_tar(pos, tar);
       }
     }
+
+    // 別人過來(末端)(靠近pos)
+    for(int i=0; i<4; i++) {
+      tmp_tar = {tar.x+direc[i].x, tar.y+direc[i].y};
+      if(check_inboard(tmp_tar) && !(tmp_tar.x == pos.x && tmp_tar.y == pos.y)) {
+        swap(my_gameboard[tar.x][tar.y], my_gameboard[tmp_tar.x][tmp_tar.y]);
+        if(my_is_line(pos)) {
+          remove_gem(pos);
+          elim_cnt++;
+          for(int i=0; i<BOARD_WIDTH; i++) {
+            if(my_gameboard[pos.x][i].ability > ABI_NULL){
+              tmp_abi = my_gameboard[pos.x][i].ability;
+              remove_gem_special({pos.x, i}, pos, elim_cnt);
+              if(tmp_abi == ABI_NORMAL)
+                elim_cnt++;
+            }
+          }
+          for(int i=0; i<BOARD_HEIGHT; i++) {
+            if(my_gameboard[i][pos.y].ability > ABI_NULL) {
+              tmp_abi = my_gameboard[i][pos.y].ability;
+              remove_gem_special({i, pos.y}, pos, elim_cnt);
+              if(tmp_abi == ABI_NORMAL)
+                elim_cnt++;
+            }
+          }
+          pos = tmp_tar;
+          return;
+        }
+        swap(my_gameboard[tar.x][tar.y], my_gameboard[tmp_tar.x][tmp_tar.y]);
+      }
+    }
   }
-  // 別人過來(末端)
+  // 別人過來(末端)(靠近tar)
   tmp_pos = {tar.x*2-pos.x, tar.y*2-pos.y};
   for(int i=0; i<4; i++) {
     tmp_tar = {tmp_pos.x+direc[i].x, tmp_pos.y+direc[i].y};
-    if(check_inboard(tmp_tar)) {
+    if(check_inboard(tmp_tar) && !(tmp_tar.x == tar.x && tmp_tar.y == tar.y)) {
       swap(my_gameboard[tmp_pos.x][tmp_pos.y], my_gameboard[tmp_tar.x][tmp_tar.y]);
-      // output_my_gameboard();
-      if(my_is_line(pos) || my_is_line(tar)) {
+      
+      // availible
+      if(my_is_line(tar)) {
         remove_gem(pos);
         elim_cnt++;
         for(int i=0; i<BOARD_WIDTH; i++) {
@@ -702,7 +734,7 @@ void ai(Pos& pos1, Pos& pos2) {
   }
     
   /*try to gen special: Q > Z > + */
-  cout << "searching special" << '\n';
+  // cout << "searching special" << '\n';
   // init vars
   indx = 0;
   bool duplicate = false;
@@ -831,7 +863,7 @@ void ai(Pos& pos1, Pos& pos2) {
   }
 
   /* best one */
-  cout << "\nfind the best one" << '\n';
+  // cout << "\nfind the best one" << '\n';
   ElimData elims[BOARD_HEIGHT*BOARD_WIDTH*2] = {};
   indx = 0;
   for (int i = 0; i < BOARD_HEIGHT; i++) {
@@ -841,8 +873,7 @@ void ai(Pos& pos1, Pos& pos2) {
         cur_tar = {i+direc[k].x, j+direc[k].y};
         if(!check_inboard(cur_tar)) continue;
         swap(my_gameboard[i][j], my_gameboard[cur_tar.x][cur_tar.y]);
-        bool result = check_my_eliminate({i-2, j-2});
-        if(result) {
+        if(check_my_eliminate()) {
           elims[indx].pos = {i, j};
           elims[indx].tar = cur_tar;
           for (int i = 0; i < BOARD_HEIGHT; ++i) {
@@ -899,9 +930,5 @@ void ai(Pos& pos1, Pos& pos2) {
   if(check_adjacent(pos1, pos2)) {
     // terminate();
     return;
-  }
-  else {
-    cout << "\nfrom ai: " << pos1.x << ' ' << pos1.y << '\n' << pos2.x << ' ' << pos2.y << '\n';
-    terminate();
   }
 }
